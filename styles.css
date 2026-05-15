@@ -312,11 +312,21 @@ img {
 }
 
 .btn-primary {
-  background: var(--gz-saffron);
+  background: var(--gz-saffron-pale);
   color: var(--gz-ink);
+  font-weight: 700;
 }
 
 .btn-primary:hover {
+  background: var(--gz-saffron);
+}
+
+/* Keep email signup button visible — it sits on a saffron-pale banner */
+.feedback-banner .btn-primary {
+  background: var(--gz-saffron);
+}
+
+.feedback-banner .btn-primary:hover {
   background: var(--gz-saffron-deep);
 }
 
@@ -370,11 +380,12 @@ img {
   gap: var(--gz-space-6);
 }
 
-/* Homepage "Popular Apps" — 4 cards in a 2x2, centered. */
+/* Homepage "Popular Apps" — 5 cards in a 3+2 centered layout. */
 .section-alt .app-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  max-width: 760px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
+  max-width: 1100px;
   margin: 0 auto;
+  justify-content: center;
 }
 
 .app-card {
@@ -506,7 +517,7 @@ img {
   gap: var(--gz-space-2);
 }
 
-/* === Featured App (Lissan) === */
+/* === Featured App (Geez Lissan) === */
 .featured {
   display: grid;
   grid-template-columns: 1fr 1fr;

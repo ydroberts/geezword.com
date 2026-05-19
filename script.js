@@ -95,4 +95,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // === Scroll-reveal — fade sections and cards up as they enter the viewport ===
+  const revealTargets = document.querySelectorAll(
+    '.section-header, .featured, .app-card, .book-card, .category h3, .coming-soon-card, .value-card'
+  );
+  if (revealTargets.length && 'IntersectionObserver' in window) {
+    revealTargets.forEach(el => el.classList.add('reveal'));
+    const revealObserver = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    revealTargets.forEach(el => revealObserver.observe(el));
+  }
 });

@@ -6,7 +6,7 @@
 }
 
 :root {
-  /* === DESIGN.md foundational tokens (Pass 1: plumbing only — not yet wired) === */
+  /* === DESIGN.md foundational tokens === */
 
   /* §3a Foundational palette */
   --gz-parchment:        #F4ECD8;
@@ -63,19 +63,12 @@
   --gz-duration-default:  260ms;
   --gz-duration-slow:     480ms;
 
-  /* === Existing aliases re-routed to foundational tokens (Pass 2) === */
-  --green-dark:   var(--gz-indigo);          /* headings, link hovers, accent text */
-  --green-mid:    var(--gz-saffron-deep);    /* hover state, focus border */
-  --green-light:  var(--gz-saffron);         /* logo accent, footer h4 */
-  --green-pale:   var(--gz-saffron-pale);    /* highlight bg, lang chips, banners */
-  --green-bg:     var(--gz-parchment-deep);  /* secondary surface, search bg, section-alt */
+  /* === Compatibility aliases (still referenced by component CSS) === */
   --text-dark:    var(--gz-ink);
   --text-mid:     var(--gz-ink-soft);
   --text-light:   var(--gz-ink-soft);
-  --white:        var(--gz-parchment);       /* page surface, navbar, cards */
-  --border:       rgba(26, 22, 20, 0.1);     /* subtle ink hairline divider */
-  --shadow:       0 2px 8px rgba(26, 22, 20, 0.08);
-  --shadow-hover: 0 4px 16px rgba(26, 22, 20, 0.12);
+  --white:        var(--gz-parchment);
+  --border:       rgba(26, 22, 20, 0.1);
   --radius:       var(--gz-radius-card);
   --max-width: 1200px;
 }
@@ -110,6 +103,12 @@ img {
   display: block;
 }
 
+/* Global keyboard-focus indicator (§9) */
+:focus-visible {
+  outline: 2px solid var(--gz-saffron);
+  outline-offset: 2px;
+}
+
 /* === Navigation === */
 .navbar {
   position: sticky;
@@ -132,11 +131,11 @@ img {
 .nav-logo {
   font-size: var(--gz-text-xl);
   font-weight: 700;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
 }
 
 .nav-logo span {
-  color: var(--green-light);
+  color: var(--gz-saffron);
 }
 
 .nav-links {
@@ -149,13 +148,13 @@ img {
   font-size: var(--gz-text-sm);
   font-weight: 500;
   color: var(--text-mid);
-  transition: color 0.2s;
+  transition: color var(--gz-duration-default) var(--gz-ease-pen);
   padding: var(--gz-space-2) 0;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
-  color: var(--green-dark);
+  color: var(--gz-indigo);
 }
 
 .nav-toggle {
@@ -182,8 +181,7 @@ img {
   font-family: inherit;
   font-size: var(--gz-text-xs);
   width: 200px;
-  outline: none;
-  transition: border-color 0.2s, width 0.2s;
+  transition: border-color var(--gz-duration-default) var(--gz-ease-pen), width var(--gz-duration-default) var(--gz-ease-pen);
   background: transparent;
 }
 
@@ -210,7 +208,7 @@ img {
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--gz-radius-card);
-  box-shadow: var(--shadow-hover);
+  box-shadow: none;
   max-height: 320px;
   overflow-y: auto;
   z-index: 200;
@@ -225,7 +223,7 @@ img {
   display: block;
   padding: var(--gz-space-3) var(--gz-space-4);
   border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
+  transition: background-color var(--gz-duration-default) var(--gz-ease-pen);
 }
 
 .search-result-item:last-child {
@@ -233,7 +231,7 @@ img {
 }
 
 .search-result-item:hover {
-  background: var(--green-bg);
+  background: var(--gz-parchment-deep);
 }
 
 .search-result-item h4 {
@@ -259,42 +257,123 @@ img {
 .hero {
   background: var(--gz-parchment);
   padding: var(--gz-space-24) var(--gz-space-6) var(--gz-space-16);
-  text-align: center;
+  overflow: hidden;
+}
+
+.hero-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: var(--gz-space-12);
+  align-items: center;
 }
 
 .hero-content {
-  max-width: 720px;
-  margin: 0 auto;
+  max-width: 640px;
 }
 
 .hero h1 {
   font-size: var(--gz-text-4xl);
   font-weight: 800;
-  color: var(--green-dark);
-  margin: 0 auto var(--gz-space-4);
+  color: var(--gz-indigo);
+  margin: 0 0 var(--gz-space-4);
   line-height: 1.1;
-  max-width: 22ch;
+  max-width: 18ch;
 }
 
 .hero h1 .geez-script {
   display: block;
   font-size: var(--gz-text-2xl);
-  color: var(--green-mid);
+  color: var(--gz-saffron-deep);
   margin-bottom: var(--gz-space-2);
 }
 
 .hero p {
   font-size: var(--gz-text-lg);
   color: var(--text-mid);
-  margin: 0 auto var(--gz-space-8);
-  max-width: 50ch;
+  margin: 0 0 var(--gz-space-8);
+  max-width: 46ch;
 }
 
 .hero-buttons {
   display: flex;
   gap: var(--gz-space-4);
-  justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Hero entrance — staggered fade-up on load */
+.hero-content h1,
+.hero-content p,
+.hero-content .hero-buttons,
+.hero-visual {
+  animation: hero-enter var(--gz-duration-slow) var(--gz-ease-pen) both;
+}
+.hero-content h1 { animation-delay: 0.05s; }
+.hero-content p  { animation-delay: 0.15s; }
+.hero-content .hero-buttons { animation-delay: 0.25s; }
+.hero-visual { animation-delay: 0.2s; animation-duration: 700ms; }
+
+@keyframes hero-enter {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero visual — Habi mascot ringed by drifting fidel */
+.hero-visual {
+  position: relative;
+  min-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-habi {
+  width: 260px;
+  max-width: 72%;
+  height: auto;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 10px 22px rgba(26, 22, 20, 0.18));
+  animation: hero-bob 4.5s var(--gz-ease-pen) infinite;
+}
+
+.hero-fidel {
+  position: absolute;
+  font-family: var(--gz-font-ethiopic-text);
+  font-weight: 700;
+  line-height: 1;
+  z-index: 1;
+  animation: hero-drift 6s var(--gz-ease-pen) infinite;
+}
+
+.hero-fidel-1 { top: 2%;     left: 6%;   font-size: 3.25rem; color: var(--gz-indigo);       animation-delay: 0s;   }
+.hero-fidel-2 { top: 14%;    right: 4%;  font-size: 4.25rem; color: var(--gz-saffron-deep); animation-delay: 0.8s; }
+.hero-fidel-3 { bottom: 24%; left: 0%;   font-size: 3.5rem;  color: var(--gz-clay);         animation-delay: 1.6s; }
+.hero-fidel-4 { bottom: 4%;  right: 14%; font-size: 3rem;    color: var(--gz-moss);         animation-delay: 0.4s; }
+.hero-fidel-5 { top: 46%;    right: 1%;  font-size: 2.5rem;  color: var(--gz-saffron-deep); animation-delay: 1.2s; }
+
+@keyframes hero-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+
+@keyframes hero-drift {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50%      { transform: translateY(-16px) rotate(4deg); }
+}
+
+/* Scroll-reveal — the .reveal class is attached by script.js (IntersectionObserver). */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity var(--gz-duration-slow) var(--gz-ease-pen),
+              transform var(--gz-duration-slow) var(--gz-ease-pen);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* === Buttons === */
@@ -307,7 +386,7 @@ img {
   font-size: var(--gz-text-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color var(--gz-duration-default) var(--gz-ease-pen), color var(--gz-duration-default) var(--gz-ease-pen), border-color var(--gz-duration-default) var(--gz-ease-pen), transform var(--gz-duration-default) var(--gz-ease-pen);
   border: none;
 }
 
@@ -346,7 +425,7 @@ img {
 }
 
 .section-alt {
-  background: var(--green-bg);
+  background: var(--gz-parchment-deep);
 }
 
 .section-header {
@@ -357,7 +436,7 @@ img {
 .section-header h2 {
   font-size: var(--gz-text-2xl);
   font-weight: 700;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   margin-bottom: var(--gz-space-3);
 }
 
@@ -380,12 +459,9 @@ img {
   gap: var(--gz-space-6);
 }
 
-/* Homepage "Popular Apps" — 5 cards in a 3+2 centered layout. */
-.section-alt .app-grid {
-  grid-template-columns: repeat(auto-fit, minmax(280px, 340px));
-  max-width: 1100px;
-  margin: 0 auto;
-  justify-content: center;
+/* Anchor offset so the sticky navbar doesn't overlap the section top. */
+#apps {
+  scroll-margin-top: 80px;
 }
 
 .app-card {
@@ -394,7 +470,7 @@ img {
   box-shadow: none;
   border-radius: var(--radius);
   padding: var(--gz-space-6);
-  transition: transform 0.2s;
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen);
   display: flex;
   flex-direction: column;
 }
@@ -410,8 +486,24 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--gz-text-xl);
+  font-family: var(--gz-font-ethiopic-text);
+  font-size: var(--gz-text-2xl);
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
   margin-bottom: var(--gz-space-4);
+}
+
+/* Icon system — a Ge'ez letter on a per-mode gradient.
+   Same recipe across every app card; swap the letter, keep the frame. */
+.app-card-icon.icon-learn {
+  background: linear-gradient(135deg, var(--gz-saffron-pale), var(--gz-saffron));
+  color: var(--gz-ink);
+}
+
+.app-card-icon.icon-play {
+  background: linear-gradient(135deg, var(--gz-indigo), var(--gz-indigo-deep));
+  color: var(--gz-saffron);
 }
 
 .app-card-screenshot {
@@ -419,7 +511,7 @@ img {
   max-height: 220px;
   border-radius: 10px;
   margin-bottom: var(--gz-space-4);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
   object-fit: cover;
   object-position: top;
 }
@@ -509,8 +601,8 @@ img {
   gap: var(--gz-space-1);
   font-size: var(--gz-text-xs);
   font-weight: 600;
-  color: var(--green-dark);
-  transition: gap 0.2s;
+  color: var(--gz-indigo);
+  transition: gap var(--gz-duration-default) var(--gz-ease-pen);
 }
 
 .app-card-link:hover {
@@ -538,7 +630,7 @@ img {
 .featured-content h2 {
   font-size: var(--gz-text-2xl);
   font-weight: 700;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   margin-bottom: var(--gz-space-4);
 }
 
@@ -581,7 +673,7 @@ img {
   background: var(--white);
   border-radius: 24px;
   padding: var(--gz-space-4);
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 
 /* === Books === */
@@ -600,7 +692,7 @@ img {
   box-shadow: none;
   border-radius: var(--radius);
   overflow: hidden;
-  transition: transform 0.2s;
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen);
   display: flex;
   flex-direction: column;
 }
@@ -669,7 +761,7 @@ img {
 .price-now {
   font-size: var(--gz-text-lg);
   font-weight: 800;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
 }
 
 /* === Book Detail Page === */
@@ -735,14 +827,14 @@ img {
   content: '\2713';
   position: absolute;
   left: 0;
-  color: var(--green-mid);
+  color: var(--gz-saffron-deep);
   font-weight: 700;
 }
 
 .book-author {
   font-size: var(--gz-text-xs);
   font-weight: 600;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   margin-bottom: var(--gz-space-4);
 }
 
@@ -798,15 +890,15 @@ img {
 .category h3 {
   font-size: var(--gz-text-2xl);
   font-weight: 800;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   margin-bottom: var(--gz-space-4);
   padding-bottom: var(--gz-space-2);
-  border-bottom: 3px solid var(--green-pale);
+  border-bottom: 3px solid var(--gz-saffron-pale);
 }
 
 /* === Feedback Banner (Playground) === */
 .feedback-banner {
-  background: var(--green-pale);
+  background: var(--gz-saffron-pale);
   border-radius: var(--radius);
   padding: var(--gz-space-6) var(--gz-space-8);
   display: flex;
@@ -819,7 +911,7 @@ img {
 
 .feedback-banner p {
   font-size: var(--gz-text-sm);
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   font-weight: 500;
 }
 
@@ -836,9 +928,8 @@ img {
   font-family: inherit;
   font-size: var(--gz-text-sm);
   width: 260px;
-  outline: none;
   background: transparent;
-  transition: border-color 0.2s;
+  transition: border-color var(--gz-duration-default) var(--gz-ease-pen);
 }
 
 .download-form input[type="email"]:focus {
@@ -893,7 +984,7 @@ img {
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: var(--gz-space-4);
-  color: var(--green-light);
+  color: var(--gz-saffron);
 }
 
 .footer-links ul {
@@ -907,7 +998,7 @@ img {
 .footer-links a {
   font-size: var(--gz-text-xs);
   color: rgba(244, 236, 216, 0.75);
-  transition: color 0.2s;
+  transition: color var(--gz-duration-default) var(--gz-ease-pen);
 }
 
 .footer-links a:hover {
@@ -921,7 +1012,7 @@ img {
   border-top: 1px solid rgba(244, 236, 216, 0.15);
   text-align: center;
   font-size: var(--gz-text-xs);
-  color: rgba(244, 236, 216, 0.55);
+  color: rgba(244, 236, 216, 0.7);
 }
 
 /* === About Page === */
@@ -938,7 +1029,7 @@ img {
 .about-content h1 {
   font-size: var(--gz-text-4xl);
   font-weight: 800;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   margin: 0 auto var(--gz-space-6);
   line-height: 1.1;
   max-width: 22ch;
@@ -967,7 +1058,7 @@ img {
 .value-card h3 {
   font-size: var(--gz-text-base);
   font-weight: 700;
-  color: var(--green-dark);
+  color: var(--gz-indigo);
   margin-bottom: var(--gz-space-2);
 }
 
@@ -989,7 +1080,7 @@ img {
     padding: var(--gz-space-4) var(--gz-space-6);
     gap: var(--gz-space-2);
     border-bottom: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    box-shadow: none;
   }
 
   .nav-links.open {
@@ -1014,6 +1105,37 @@ img {
     right: 0;
   }
 
+  .hero-inner {
+    grid-template-columns: 1fr;
+    gap: var(--gz-space-8);
+    text-align: center;
+  }
+
+  .hero-content {
+    max-width: 100%;
+  }
+
+  .hero h1 {
+    max-width: 100%;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+
+  .hero-visual {
+    min-height: 260px;
+  }
+
+  .hero-habi {
+    width: 170px;
+  }
+
+  .hero-fidel-3,
+  .hero-fidel-5 {
+    display: none;
+  }
+
   .hero h1,
   .about-content h1 {
     font-size: var(--gz-text-3xl);
@@ -1025,6 +1147,9 @@ img {
 
   .hero p {
     font-size: var(--gz-text-sm);
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .featured {
@@ -1049,5 +1174,29 @@ img {
   .feedback-banner {
     flex-direction: column;
     text-align: center;
+  }
+}
+
+/* === Reduced motion (§9 accessibility) === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .app-card:hover,
+  .book-card:hover {
+    transform: none;
+  }
+
+  /* Scroll-reveal targets stay fully visible — no fade-up. */
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 }

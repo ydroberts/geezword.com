@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GeezWord — Learn Geez, Amharic & Tigrinya</title>
+ <title>GeezWord — Learn Geez, Amharic & Tigrinya</title>
   <meta name="description" content="Interactive tools, games, and resources bridging diaspora communities with their homeland through Geez, Amharic, and Tigrinya language learning.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
       <a href="index.html" class="nav-logo">Geez<span>Word</span></a>
       <ul class="nav-links">
         <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="apps.html">Apps</a></li>
+        <li><a href="#apps">Apps</a></li>
         <li><a href="books.html">Books</a></li>
         <li><a href="downloads.html">Downloads</a></li>
         <li><a href="about.html">About</a></li>
@@ -34,15 +34,25 @@
 
   <!-- Hero -->
   <section class="hero">
-    <div class="hero-content">
-      <h1>
-        <span class="geez-script">&#4877;&#4821;&#4829; &#4808;&#4653;&#4853;</span>
-        Learn Your Language, Keep Your Roots
-      </h1>
-      <p>Interactive apps and games that make learning Geez, Amharic, and Tigrinya fun for the diaspora and beyond.</p>
-      <div class="hero-buttons">
-        <a href="apps.html" class="btn btn-primary">Explore Apps &#8594;</a>
-        <a href="downloads.html" class="btn btn-secondary">Free Downloads</a>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h1>
+          <span class="geez-script">&#4877;&#4821;&#4829; &#4808;&#4653;&#4853;</span>
+          Learn Your Language, Keep Your Roots
+        </h1>
+        <p>Interactive apps and games that make learning Geez, Amharic, and Tigrinya fun for the diaspora and beyond.</p>
+        <div class="hero-buttons">
+          <a href="#apps" class="btn btn-primary">Explore Apps &#8594;</a>
+          <a href="downloads.html" class="btn btn-secondary">Free Downloads</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <span class="hero-fidel hero-fidel-1">&#4608;</span>
+        <span class="hero-fidel hero-fidel-2">&#4616;</span>
+        <span class="hero-fidel hero-fidel-3">&#4632;</span>
+        <span class="hero-fidel hero-fidel-4">&#4704;</span>
+        <span class="hero-fidel hero-fidel-5">&#4811;</span>
+        <img class="hero-habi" src="images/habi-waving.png" alt="">
       </div>
     </div>
   </section>
@@ -66,15 +76,15 @@
           <div class="phone-mockup">
             <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 12px;">STEP 1 OF 3</p>
             <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">What would you like to learn?</p>
-            <div style="background: var(--green-bg); border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
+            <div style="background: var(--gz-parchment-deep); border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
               <strong>&#4768;&#4635;&#4653;&#4763;</strong><br>
               <span style="font-size: 0.85rem; color: var(--text-light);">Amharic &mdash; ~57M speakers</span>
             </div>
-            <div style="background: var(--green-bg); border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
+            <div style="background: var(--gz-parchment-deep); border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
               <strong>&#4725;&#4877;&#4653;&#4763;</strong><br>
               <span style="font-size: 0.85rem; color: var(--text-light);">Tigrinya &mdash; ~9M speakers</span>
             </div>
-            <div style="background: var(--green-bg); border-radius: 8px; padding: 12px; text-align: left;">
+            <div style="background: var(--gz-parchment-deep); border-radius: 8px; padding: 12px; text-align: left;">
               <strong>English</strong><br>
               <span style="font-size: 0.85rem; color: var(--text-light);">For Amharic & Tigrinya speakers</span>
             </div>
@@ -84,71 +94,115 @@
     </div>
   </section>
 
-  <!-- App Highlights -->
-  <section class="section section-alt">
+  <!-- Apps -->
+  <section class="section section-alt" id="apps">
     <div class="container">
       <div class="section-header">
-        <h2>Popular Apps</h2>
-        <p>Learn through play &mdash; interactive tools designed for all ages</p>
+        <h2>Explore the Apps</h2>
+        <p>Interactive tools for learning Geez, Amharic, and Tigrinya &mdash; organized by how you like to learn.</p>
       </div>
-      <div class="app-grid">
 
-        <a href="https://quest.geezword.com" class="app-card">
-          <div class="app-card-icon" style="background: linear-gradient(135deg, #F0D88A, #D4A027); font-family: var(--gz-font-ethiopic-text); color: var(--gz-ink); font-weight: 700;">&#4613;</div>
-          <h4>Geez Assessment</h4>
-          <p>Find out which Geez fidel you already know, where your gaps are, and which learning resource is right for you next.</p>
-          <div class="app-card-tags">
-            <span class="tag tag-learn">Placement</span>
-            <span class="tag tag-learn">Free</span>
-          </div>
-          <span class="app-card-link">Take the assessment &#8594;</span>
-        </a>
+      <div class="category">
+        <h3>&#128218; Learn</h3>
+        <div class="app-grid">
 
-        <a href="https://marbles.geezword.com" class="app-card">
-          <div class="app-card-icon" style="background: #fef3c7;">&#127922;</div>
-          <h4>Geez Fidel Marble Games</h4>
-          <p>Learn the Geez alphabet through a fun and addictive marble matching game.</p>
-          <div class="app-card-tags">
-            <span class="tag tag-play">Game</span>
-            <span class="tag tag-learn">Alphabet</span>
-          </div>
-          <span class="app-card-link">Play now &#8594;</span>
-        </a>
+          <a href="https://quest.geezword.com" class="app-card">
+            <div class="app-card-icon icon-learn">&#4768;</div>
+            <h4>Geez Assessment</h4>
+            <p>Find out which Geez fidel you already know, where your gaps are, and which learning resource is right for you next.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-learn">Placement</span>
+              <span class="tag tag-learn">Free</span>
+            </div>
+            <span class="app-card-link">Take the assessment &#8594;</span>
+          </a>
 
-        <a href="https://kidase.geezword.com" class="app-card">
-          <div class="app-card-icon" style="background: #dbeafe;">&#128214;</div>
-          <h4>Sirate Kidase Tutor</h4>
-          <p>Interactive tutor for learning the Orthodox Tewahedo Kidase (liturgy) with guided lessons.</p>
-          <div class="app-card-tags">
-            <span class="tag tag-learn">Learning</span>
-            <span class="tag tag-learn">Culture</span>
-          </div>
-          <span class="app-card-link">Start learning &#8594;</span>
-        </a>
+          <a href="https://lissan.geezword.com" class="app-card">
+            <div class="app-card-icon icon-learn">&#4621;</div>
+            <h4>Geez Lissan</h4>
+            <p>Interactive language learning for Amharic, Tigrinya, English, and Arabic. Your guide to reconnecting with your mother tongue.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-learn">Languages</span>
+            </div>
+            <span class="app-card-link">Try Geez Lissan &#8594;</span>
+          </a>
 
-        <a href="https://tigrinya-for-beginners.geezword.com" class="app-card">
-          <div class="app-card-icon" style="background: #fef3c7;">&#128218;</div>
-          <h4>Tigrinya for Beginners</h4>
-          <p>Companion app to the book by Woldeab Woldemariam. Interactive lessons, audio, and quizzes.</p>
-          <div class="app-card-tags">
-            <span class="tag tag-learn">Tigrinya</span>
-            <span class="tag tag-learn">Alphabet</span>
-          </div>
-          <span class="app-card-link">Start learning &#8594;</span>
-        </a>
+          <a href="https://tigrinya-for-beginners.geezword.com" class="app-card">
+            <div class="app-card-icon icon-learn">&#4808;</div>
+            <h4>Tigrinya for Beginners</h4>
+            <p>Companion app to the book by Woldeab Woldemariam. Interactive lessons, audio, and quizzes.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-learn">Tigrinya</span>
+              <span class="tag tag-learn">Alphabet</span>
+            </div>
+            <span class="app-card-link">Start learning &#8594;</span>
+          </a>
 
-        <a href="https://tracing.geezword.com" class="app-card">
-          <div class="app-card-icon" style="background: #ede9fe;">&#128302;</div>
-          <h4>Geez Alphabet Tracing</h4>
-          <p>Practice writing Geez characters with interactive finger and mouse tracing on any device.</p>
-          <div class="app-card-tags">
-            <span class="tag tag-learn">Learning</span>
-            <span class="tag tag-learn">Writing</span>
-          </div>
-          <span class="app-card-link">Start tracing &#8594;</span>
-        </a>
+          <a href="https://kidase.geezword.com" class="app-card">
+            <div class="app-card-icon icon-learn">&#4677;</div>
+            <h4>Sirate Kidase Tutor</h4>
+            <p>Interactive tutor for learning the Orthodox Tewahedo Kidase (liturgy) with guided lessons.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-learn">Learning</span>
+              <span class="tag tag-learn">Culture</span>
+            </div>
+            <span class="app-card-link">Start learning &#8594;</span>
+          </a>
 
+          <a href="https://tracing.geezword.com" class="app-card">
+            <div class="app-card-icon icon-learn">&#4925;</div>
+            <h4>Geez Alphabet Tracing</h4>
+            <p>Practice writing Geez characters with interactive finger and mouse tracing on any device.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-learn">Writing</span>
+              <span class="tag tag-learn">Tracing</span>
+            </div>
+            <span class="app-card-link">Start tracing &#8594;</span>
+          </a>
+
+        </div>
       </div>
+
+      <div class="category">
+        <h3>&#127918; Play</h3>
+        <div class="app-grid">
+
+          <a href="https://marbles.geezword.com" class="app-card">
+            <div class="app-card-icon icon-play">&#4635;</div>
+            <h4>Geez Fidel Marble Games</h4>
+            <p>Learn the Geez alphabet through a fun and addictive marble matching game.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-play">Game</span>
+              <span class="tag tag-learn">Alphabet</span>
+            </div>
+            <span class="app-card-link">Play now &#8594;</span>
+          </a>
+
+          <a href="https://arcade.geezword.com" class="app-card">
+            <div class="app-card-icon icon-play">&#4936;</div>
+            <h4>Geez Fidel Arcade</h4>
+            <p>Fifteen arcade and puzzle games for learning the Ge&#39;ez alphabet &mdash; hear, find, build, and trace fidel.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-play">Arcade</span>
+              <span class="tag tag-learn">Alphabet</span>
+            </div>
+            <span class="app-card-link">Play now &#8594;</span>
+          </a>
+
+          <a href="https://racing.geezword.com" class="app-card">
+            <div class="app-card-icon icon-play">&#4648;</div>
+            <h4>Geez Car Racing</h4>
+            <p>Race cars while learning Geez consonants. Speed meets alphabet mastery.</p>
+            <div class="app-card-tags">
+              <span class="tag tag-play">Racing</span>
+              <span class="tag tag-learn">Alphabet</span>
+            </div>
+            <span class="app-card-link">Play now &#8594;</span>
+          </a>
+
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -235,7 +289,7 @@
         <h4>Navigate</h4>
         <ul>
           <li><a href="index.html">Home</a></li>
-          <li><a href="apps.html">Apps</a></li>
+          <li><a href="index.html#apps">Apps</a></li>
           <li><a href="books.html">Books</a></li>
           <li><a href="downloads.html">Downloads</a></li>
           <li><a href="about.html">About</a></li>

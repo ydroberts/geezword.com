@@ -1,0 +1,340 @@
+/* === start.html — funnel landing page ===
+   Layered on top of styles.css. Only includes the few patterns specific
+   to this page (4-category grid, help-me-choose cards, featured product
+   grid, why-stats, final CTA section). Everything else reuses the existing
+   DESIGN.md token system, hero, navbar, footer, and button styles. */
+
+/* Hero — italicised tagline on the second line of the headline */
+.hero-tagline {
+  display: block;
+  font-family: var(--gz-font-display);
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--gz-saffron-deep);
+  font-style: italic;
+  margin-top: var(--gz-space-2);
+}
+
+/* Anchor offset — sections jumped to from the hero need to clear the
+   sticky navbar (64px tall). */
+#categories,
+#help-me-choose {
+  scroll-margin-top: 80px;
+}
+
+/* === Four Categories grid =================================== */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--gz-space-6);
+}
+
+.category-card {
+  background: var(--gz-parchment);
+  border-radius: var(--gz-radius-card);
+  padding: var(--gz-space-6);
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen);
+  text-decoration: none;
+  color: inherit;
+}
+
+.category-card:hover {
+  transform: translateY(-3px);
+}
+
+.category-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--gz-font-ethiopic-text);
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-bottom: var(--gz-space-4);
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.category-card:hover .category-icon {
+  transform: translateY(-2px) rotate(-3deg);
+}
+
+/* Per-mode icon recipe — same letter, different DESIGN.md §3a colour */
+.category-icon.icon-learn {
+  background: linear-gradient(135deg, var(--gz-saffron-pale), var(--gz-saffron));
+  color: var(--gz-ink);
+}
+
+.category-icon.icon-play {
+  background: linear-gradient(135deg, var(--gz-indigo), var(--gz-indigo-deep));
+  color: var(--gz-saffron);
+}
+
+.category-icon.icon-read {
+  background: linear-gradient(135deg, var(--gz-clay), #8C543A);
+  color: var(--gz-parchment);
+}
+
+.category-icon.icon-type {
+  background: linear-gradient(135deg, var(--gz-moss), #3F4A28);
+  color: var(--gz-parchment);
+}
+
+.category-card h3 {
+  font-family: var(--gz-font-display);
+  font-size: var(--gz-text-xl);
+  font-weight: 800;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-3);
+}
+
+.category-card p {
+  font-size: var(--gz-text-sm);
+  color: var(--text-mid);
+  margin-bottom: var(--gz-space-4);
+  flex-grow: 1;
+  line-height: 1.6;
+}
+
+.category-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gz-space-1);
+  font-size: var(--gz-text-sm);
+  font-weight: 700;
+  color: var(--gz-saffron-deep);
+  transition: gap var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.category-card:hover .category-link {
+  gap: var(--gz-space-3);
+}
+
+/* === Help Me Choose — guided buttons ====================== */
+.choose-grid {
+  display: grid;
+  gap: var(--gz-space-3);
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.choose-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gz-space-4);
+  padding: var(--gz-space-4) var(--gz-space-6);
+  background: var(--gz-parchment);
+  border: 1px solid var(--border);
+  border-radius: var(--gz-radius-card);
+  font-family: var(--gz-font-body);
+  font-size: var(--gz-text-base);
+  font-weight: 600;
+  color: var(--gz-ink);
+  text-decoration: none;
+  transition: background-color var(--gz-duration-default) var(--gz-ease-pen),
+              border-color var(--gz-duration-default) var(--gz-ease-pen),
+              transform var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.choose-card:hover {
+  background: var(--gz-saffron-pale);
+  border-color: var(--gz-saffron);
+  transform: translateX(4px);
+}
+
+.choose-text {
+  flex: 1;
+}
+
+.choose-arrow {
+  color: var(--gz-saffron-deep);
+  font-size: var(--gz-text-lg);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* === Featured Products grid =============================== */
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gz-space-6);
+}
+
+.featured-card {
+  background: var(--gz-parchment);
+  border-radius: var(--gz-radius-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.featured-card:hover {
+  transform: translateY(-3px);
+}
+
+.featured-img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--gz-parchment-deep);
+}
+
+.featured-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* When we don't have a real image — show a Ge'ez letter on a gradient */
+.featured-img-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gz-moss), #3F4A28);
+}
+
+.featured-letter {
+  font-family: var(--gz-font-ethiopic-text);
+  font-size: 5rem;
+  color: var(--gz-parchment);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.featured-body {
+  padding: var(--gz-space-6);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.featured-tag {
+  display: inline-block;
+  font-size: var(--gz-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gz-saffron-deep);
+  margin-bottom: var(--gz-space-3);
+}
+
+.featured-card h4 {
+  font-size: var(--gz-text-lg);
+  font-weight: 700;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-2);
+  line-height: 1.25;
+}
+
+.featured-card p {
+  font-size: var(--gz-text-sm);
+  color: var(--text-mid);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* === Why Geezword — stats row ============================ */
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--gz-space-6);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.why-card {
+  text-align: center;
+  padding: var(--gz-space-6) var(--gz-space-4);
+}
+
+.why-stat {
+  font-family: var(--gz-font-display);
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--gz-saffron-deep);
+  line-height: 1;
+  margin-bottom: var(--gz-space-3);
+}
+
+.why-label {
+  font-size: var(--gz-text-sm);
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+
+/* === Final CTA — indigo band ============================ */
+.final-cta-section {
+  background: var(--gz-indigo);
+  text-align: center;
+  padding: var(--gz-space-16) var(--gz-space-6);
+}
+
+.final-cta-content h2 {
+  color: var(--gz-saffron-pale);
+  font-size: var(--gz-text-3xl);
+  font-weight: 800;
+  margin-bottom: var(--gz-space-4);
+}
+
+.final-cta-content p {
+  color: var(--gz-parchment);
+  font-size: var(--gz-text-base);
+  max-width: 560px;
+  margin: 0 auto var(--gz-space-8);
+  opacity: 0.85;
+}
+
+.final-cta-button {
+  font-size: var(--gz-text-base);
+  padding: var(--gz-space-4) var(--gz-space-8);
+}
+
+.final-cta-button:hover {
+  transform: translateY(-1px);
+}
+
+/* === Mobile === */
+@media (max-width: 768px) {
+  .hero-tagline {
+    font-size: 0.7em;
+  }
+
+  .category-grid,
+  .featured-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .why-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gz-space-4);
+  }
+
+  .why-stat {
+    font-size: 2.75rem;
+  }
+
+  .choose-card {
+    padding: var(--gz-space-3) var(--gz-space-4);
+    font-size: var(--gz-text-sm);
+  }
+
+  .final-cta-content h2 {
+    font-size: var(--gz-text-2xl);
+  }
+
+  .category-icon {
+    width: 72px;
+    height: 72px;
+    font-size: 2.6rem;
+  }
+}

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start Here &mdash; GeezWord</title>
+  <meta name="description" content="Find the right Geezword tool for your goal — learn, play, read, or type in Tigrinya, Amharic, and Geez. Four paths, one ecosystem.">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph (social shares) -->
+  <meta property="og:title" content="Learn. Play. Read. Type. The Geezword Way.">
+  <meta property="og:description" content="Tools to help families, students, churches, and language learners preserve and grow Tigrinya, Amharic, and Geez.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://geezword.com/start">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..800&family=JetBrains+Mono:wght@400..700&family=Newsreader:opsz,wght@6..72,400..700&family=Noto+Sans+Ethiopic:wght@400..700&family=Noto+Serif+Ethiopic:wght@400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="start.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">Geez<span>Word</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="start.html" class="active">Start</a></li>
+        <li><a href="index.html#apps">Apps</a></li>
+        <li><a href="books.html">Books</a></li>
+        <li><a href="downloads.html">Downloads</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <div class="nav-search">
+        <span class="nav-search-icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search apps..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-content">
+        <h1>
+          <span class="geez-script">&#4877;&#4821;&#4829; &#4808;&#4653;&#4853;</span>
+          Learn. Play. Read. Type. <span class="hero-tagline">The Geezword Way.</span>
+        </h1>
+        <p>Tools to help families, students, churches, and language learners preserve and grow Tigrinya, Amharic, and Geez.</p>
+        <div class="hero-buttons">
+          <a href="#categories" class="btn btn-primary">Find Your Path &#8594;</a>
+          <a href="#help-me-choose" class="btn btn-secondary">Help Me Choose</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <span class="hero-fidel hero-fidel-1">&#4608;</span>
+        <span class="hero-fidel hero-fidel-2">&#4616;</span>
+        <span class="hero-fidel hero-fidel-3">&#4632;</span>
+        <span class="hero-fidel hero-fidel-4">&#4704;</span>
+        <span class="hero-fidel hero-fidel-5">&#4811;</span>
+        <img class="hero-habi" src="images/habi-waving.png" alt="">
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 Categories -->
+  <section class="section" id="categories">
+    <div class="container">
+      <div class="section-header">
+        <h2>Find Your Path</h2>
+        <p>Four ways into Geez script and language &mdash; pick the one that fits you.</p>
+      </div>
+
+      <div class="category-grid">
+
+        <a href="index.html#apps" class="category-card" id="learn-button">
+          <div class="category-icon icon-learn">&#4621;</div>
+          <h3>Learn</h3>
+          <p>Language-learning apps, alphabet tutorials, the Geez Lissan companion, and Kidase tools for Tigrinya, Amharic, and Geez.</p>
+          <span class="category-link">Explore Learn &#8594;</span>
+        </a>
+
+        <a href="index.html#apps" class="category-card" id="play-button">
+          <div class="category-icon icon-play">&#4635;</div>
+          <h3>Play</h3>
+          <p>Alphabet games and interactive practice tools that make learning the fidel fun for kids and adults.</p>
+          <span class="category-link">Explore Play &#8594;</span>
+        </a>
+
+        <a href="books.html" class="category-card" id="read-button">
+          <div class="category-icon icon-read">&#4632;</div>
+          <h3>Read</h3>
+          <p>Published guides for the diaspora &mdash; Tigrinya Reading for Beginners and the Alphabet Tracing Book.</p>
+          <span class="category-link">Explore Read &#8594;</span>
+        </a>
+
+        <a href="downloads.html" class="category-card" id="type-button">
+          <div class="category-icon icon-type">&#4659;</div>
+          <h3>Type</h3>
+          <p>Geezword keyboards, fonts, and typing tools for Tigrinya, Amharic, and Geez &mdash; for desktop and mobile.</p>
+          <span class="category-link">Explore Type &#8594;</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Help Me Choose -->
+  <section class="section section-alt" id="help-me-choose">
+    <div class="container">
+      <div class="section-header">
+        <h2>Help Me Choose</h2>
+        <p>Tell us what you&rsquo;re here for &mdash; we&rsquo;ll point you to the right tool.</p>
+      </div>
+
+      <div class="choose-grid">
+
+        <a href="https://tracing.geezword.com" class="choose-card" id="child-learning-button">
+          <span class="choose-text">I want my child to learn the alphabet</span>
+          <span class="choose-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+
+        <a href="https://lissan.geezword.com" class="choose-card" id="adult-learning-button">
+          <span class="choose-text">I want to learn Tigrinya or Amharic as an adult</span>
+          <span class="choose-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+
+        <a href="books.html" class="choose-card" id="books-button">
+          <span class="choose-text">I want books for home or class</span>
+          <span class="choose-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+
+        <a href="downloads.html" class="choose-card" id="typing-button">
+          <span class="choose-text">I want to type in Geez script</span>
+          <span class="choose-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+
+        <a href="https://kidase.geezword.com" class="choose-card" id="kidase-button">
+          <span class="choose-text">I want church &middot; Kidase learning tools</span>
+          <span class="choose-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Featured Products</h2>
+        <p>A few of the most-loved tools across the ecosystem.</p>
+      </div>
+
+      <div class="featured-grid">
+
+        <a href="books.html" class="featured-card">
+          <div class="featured-img">
+            <img src="images/tigrinya-for-beginners.jpg" alt="Tigrinya for Beginners book cover">
+          </div>
+          <div class="featured-body">
+            <span class="featured-tag">Book</span>
+            <h4>Tigrinya Reading for Beginners</h4>
+            <p>The first complete beginner&rsquo;s guide to Tigrinya, paired with the companion app.</p>
+          </div>
+        </a>
+
+        <a href="books.html" class="featured-card">
+          <div class="featured-img">
+            <img src="images/tigrinya-letter-tracing.jpg" alt="Tigrinya Letter Tracing Book cover">
+          </div>
+          <div class="featured-body">
+            <span class="featured-tag">Book</span>
+            <h4>Tigrinya Alphabet Tracing Book</h4>
+            <p>Hands-on tracing practice covering every fidel, for kids and beginners.</p>
+          </div>
+        </a>
+
+        <a href="downloads.html" class="featured-card">
+          <div class="featured-img featured-img-letter">
+            <span class="featured-letter">&#4659;</span>
+          </div>
+          <div class="featured-body">
+            <span class="featured-tag">Keyboard</span>
+            <h4>Geezword Keyboards</h4>
+            <p>Type Tigrinya, Amharic, and Geez naturally on desktop and mobile.</p>
+          </div>
+        </a>
+
+        <a href="https://marbles.geezword.com" class="featured-card">
+          <div class="featured-img">
+            <img src="images/marble.png" alt="GeezFidel Marble Games preview">
+          </div>
+          <div class="featured-body">
+            <span class="featured-tag">Game</span>
+            <h4>Alphabet Learning Games</h4>
+            <p>Marble Games and the Fidel Arcade &mdash; learn the alphabet by playing.</p>
+          </div>
+        </a>
+
+        <a href="https://lissan.geezword.com" class="featured-card">
+          <div class="featured-img">
+            <img src="images/Lissan.png" alt="Geez Lissan app preview">
+          </div>
+          <div class="featured-body">
+            <span class="featured-tag">App</span>
+            <h4>Geez Lissan</h4>
+            <p>The flagship language app for Amharic, Tigrinya, English, and Arabic learners.</p>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Geezword -->
+  <section class="section section-alt">
+    <div class="container">
+      <div class="section-header">
+        <h2>Why Geezword</h2>
+        <p>For over <strong>40 years</strong>, GeezWord has built the tools that keep Geez script alive across the diaspora &mdash; software, keyboards, fonts, books, tutorials, and cultural education.</p>
+      </div>
+
+      <div class="why-grid">
+
+        <div class="why-card">
+          <div class="why-stat">40+</div>
+          <div class="why-label">Years of Geez software</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-stat">3</div>
+          <div class="why-label">Languages &mdash; Tigrinya, Amharic, Geez</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-stat">6</div>
+          <div class="why-label">Apps live across the ecosystem</div>
+        </div>
+
+        <div class="why-card">
+          <div class="why-stat">&#8734;</div>
+          <div class="why-label">For families, students, churches, and the diaspora</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="section final-cta-section">
+    <div class="container final-cta-content">
+      <h2>Ready to dive in?</h2>
+      <p>Explore the full library of GeezWord apps, games, books, and typing tools.</p>
+      <a href="index.html#apps" class="btn btn-primary final-cta-button" id="explore-products-button">
+        Explore All Geezword Products &#8594;
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h3>GeezWord</h3>
+        <p>Bridging diaspora communities with their homeland through language and culture. Learn Geez, Amharic, and Tigrinya with interactive tools built for the modern world.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="start.html">Start</a></li>
+          <li><a href="index.html#apps">Apps</a></li>
+          <li><a href="books.html">Books</a></li>
+          <li><a href="downloads.html">Downloads</a></li>
+          <li><a href="about.html">About</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Apps</h4>
+        <ul>
+          <li><a href="https://quest.geezword.com">Geez Assessment</a></li>
+          <li><a href="https://marbles.geezword.com">Marble Games</a></li>
+          <li><a href="https://arcade.geezword.com">Arcade</a></li>
+          <li><a href="https://kidase.geezword.com">Kidase Tutor</a></li>
+          <li><a href="https://lissan.geezword.com">Geez Lissan</a></li>
+          <li><a href="https://tigrinya-for-beginners.geezword.com">Tigrinya for Beginners</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 GeezWord. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

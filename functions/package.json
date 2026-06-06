@@ -1,0 +1,21 @@
+{
+  "name": "geezword-functions",
+  "description": "Cloud Functions for geezword-com — community signup notifications via Resend.",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0",
+    "resend": "^4.0.1"
+  }
+}

@@ -43,11 +43,10 @@ const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
 // Who gets the notification email. Hardcoded since it's the owner address.
 const NOTIFY_TO = "ydroberts@gmail.com";
 
-// Sender. Until you verify geezword.com in Resend, use their shared sender
-// (works out of the box, may land in Promotions tab). To use a custom sender,
-// verify the domain at resend.com/domains and set FROM_EMAIL to e.g.
-// "Geezword <hello@geezword.com>".
-const FROM_EMAIL = "Geezword Signup <onboarding@resend.dev>";
+// Sender. geezword.com domain verified in Resend 2026-06-06 with DKIM +
+// SPF DNS records at SiteGround. To change the local-part (hello@),
+// update below — no DNS change needed since any *@geezword.com works.
+const FROM_EMAIL = "Geezword <hello@geezword.com>";
 
 exports.notifyOnCommunitySignup = onDocumentCreated(
   {

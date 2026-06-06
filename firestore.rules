@@ -1,0 +1,56 @@
+rules_version = '2';
+
+// Security rules for the Geezword community signup form.
+//
+// To deploy:
+//   - Firebase Console → Firestore Database → Rules tab → paste this file → Publish
+//   - Or via Firebase CLI:  firebase deploy --only firestore:rules
+//
+// The community-signups collection is write-only from clients (public can create,
+// nobody can read/update/delete). Admin reads happen via the Firebase Console.
+// Schema and size limits below cap the cost of abuse — an attacker can post
+// junk rows, but each row is small and there's no read amplification.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /community-signups/{docId} {
+      allow create: if
+        // Field allow-list — no surprise fields
+        request.resource.data.keys().hasOnly(
+          ['firstName', 'email', 'interests', 'source', 'createdAt']
+        )
+
+        // firstName: required string, 1–80 chars
+        && request.resource.data.firstName is string
+        && request.resource.data.firstName.size() > 0
+        && request.resource.data.firstName.size() <= 80
+
+        // email: required string, plausibly an email address, 5–200 chars
+        && request.resource.data.email is string
+        && request.resource.data.email.size() >= 5
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
+
+        // interests: list, at most 10 entries (UI shows 5)
+        && request.resource.data.interests is list
+        && request.resource.data.interests.size() <= 10
+
+        // source: string identifying the entry point (e.g. "start-page")
+        && request.resource.data.source is string
+        && request.resource.data.source.size() <= 50
+
+        // createdAt MUST be a server timestamp (prevents client clock spoofing)
+        && request.resource.data.createdAt == request.time;
+
+      // No public read/update/delete. Read submissions in the Firebase Console
+      // or via an authenticated admin client (not yet configured).
+      allow read, update, delete: if false;
+    }
+
+    // Default deny for any other collection. Tighten/relax later as needed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -502,54 +502,127 @@
     </div>
   </section>
 
-  <script>
-    /* Placeholder community-form handler. Captures to localStorage and shows
-       a success state until a real endpoint is wired (see HTML comment above). */
-    (function () {
-      var form = document.getElementById('community-form');
-      var success = document.getElementById('community-success');
-      var nameOut = document.getElementById('success-name');
-      if (!form || !success) return;
+  <!--
+    Community form backend — Firebase Firestore.
 
-      form.addEventListener('submit', function (e) {
-        // If a real action URL has been set, let the browser submit natively.
-        if (form.getAttribute('action')) return;
+    The firebaseConfig object below is PUBLIC by design (it's just a project
+    identifier). The actual security is enforced by firestore.rules at the
+    repo root. Until apiKey is replaced with a real value, the form falls
+    back to localStorage so local previews still work.
+
+    Setup checklist (one-time, ~10 min):
+      1. console.firebase.google.com  →  Add project  →  name it
+         "geezword-com" (recommended, separate from any individual app's
+         Firebase project).
+      2. Project Settings  →  Your apps  →  Add app (web, </>)  →
+         register "geezword.com" and copy the firebaseConfig object.
+         Paste it over the REPLACE_ME values below.
+      3. Build  →  Firestore Database  →  Create database (Native mode,
+         start in production rules).
+      4. Open the Rules tab and paste the contents of firestore.rules
+         from this repo. Publish.
+      5. (Recommended later) Build  →  App Check  →  reCAPTCHA v3 to
+         deter bot signups.
+
+    Reading submissions: Firebase Console  →  Firestore  →
+    community-signups collection. Each doc has firstName, email,
+    interests[], source, createdAt.
+  -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyAQ0ZXnenNaDN_YhvHyU3bX8P6tlH5L2ps",
+      authDomain:        "geezword-com.firebaseapp.com",
+      projectId:         "geezword-com",
+      storageBucket:     "geezword-com.firebasestorage.app",
+      messagingSenderId: "453691657979",
+      appId:             "1:453691657979:web:c71e971c05da4e42e06a5e"
+    };
+
+    const isConfigured =
+      firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("REPLACE_ME");
+
+    let db = null;
+    if (isConfigured) {
+      try {
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+      } catch (err) {
+        console.warn("[geezword-community] Firebase init failed", err);
+      }
+    } else {
+      console.info("[geezword-community] Firebase not configured; using localStorage fallback.");
+    }
+
+    const form     = document.getElementById("community-form");
+    const success  = document.getElementById("community-success");
+    const nameOut  = document.getElementById("success-name");
+    const submitEl = document.getElementById("join-free-button");
+
+    if (form && success) {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        var firstName = (form.elements['firstName'].value || '').trim();
-        var email = (form.elements['email'].value || '').trim();
+        const firstName = (form.elements["firstName"].value || "").trim();
+        const email     = (form.elements["email"].value || "").trim();
         if (!firstName || !email) {
           form.reportValidity();
           return;
         }
 
-        var interests = [];
-        var boxes = form.querySelectorAll('input[name="interests"]:checked');
-        for (var i = 0; i < boxes.length; i++) interests.push(boxes[i].value);
+        const interests = Array.from(
+          form.querySelectorAll('input[name="interests"]:checked')
+        ).map(b => b.value);
 
-        var entry = {
-          firstName: firstName,
-          email: email,
-          interests: interests,
-          timestamp: new Date().toISOString(),
-          source: 'start-page'
-        };
+        const originalLabel = submitEl ? submitEl.innerHTML : "";
+        if (submitEl) {
+          submitEl.disabled = true;
+          submitEl.innerHTML = "Joining…";
+        }
 
-        try {
-          var key = form.dataset.storage || 'geezword-community-signups';
-          var existing = JSON.parse(localStorage.getItem(key) || '[]');
-          existing.push(entry);
-          localStorage.setItem(key, JSON.stringify(existing));
-        } catch (err) {
-          /* localStorage may be unavailable (private mode); proceed anyway */
+        const payload = { firstName, email, interests, source: "start-page" };
+
+        let savedRemote = false;
+        if (db) {
+          try {
+            await addDoc(collection(db, "community-signups"), {
+              ...payload,
+              createdAt: serverTimestamp(),
+            });
+            savedRemote = true;
+          } catch (err) {
+            console.warn(
+              "[geezword-community] Firestore write failed, using localStorage fallback",
+              err
+            );
+          }
+        }
+
+        if (!savedRemote) {
+          try {
+            const key = form.dataset.storage || "geezword-community-signups";
+            const existing = JSON.parse(localStorage.getItem(key) || "[]");
+            existing.push({ ...payload, timestamp: new Date().toISOString() });
+            localStorage.setItem(key, JSON.stringify(existing));
+          } catch (err) {
+            /* private mode etc. — proceed anyway */
+          }
         }
 
         if (nameOut) nameOut.textContent = firstName;
         form.hidden = true;
         success.hidden = false;
-        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        success.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        if (submitEl) {
+          submitEl.disabled = false;
+          submitEl.innerHTML = originalLabel;
+        }
       });
-    })();
+    }
   </script>
 
   <!-- Footer -->

@@ -3,3 +3,6 @@ desktop.ini
 # Deploy artifacts / stray files
 *.zip
 httpsgeezword.comads.txt.txt
+
+# Local screenshot/preview tooling (Playwright + captured screenshots)
+.screenshots/

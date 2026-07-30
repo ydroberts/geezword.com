@@ -157,6 +157,22 @@ img {
   color: var(--gz-indigo);
 }
 
+/* Join — highlighted CTA in the nav */
+.nav-links a.nav-join {
+  color: var(--gz-ink);
+  background: var(--gz-saffron);
+  padding: var(--gz-space-2) var(--gz-space-4);
+  border-radius: var(--gz-radius-pill);
+  font-weight: 600;
+  transition: background var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.nav-links a.nav-join:hover,
+.nav-links a.nav-join.active {
+  color: var(--gz-ink);
+  background: var(--gz-saffron-deep);
+}
+
 .nav-toggle {
   display: none;
   background: none;

@@ -134,7 +134,7 @@
         </ul>
 
         <div class="register-actions">
-          <a href="#community" class="btn btn-primary btn-xl">Join Free &#8594;</a>
+          <a href="#community" id="join-free-cta" class="btn btn-primary btn-xl">Join Free &#8594;</a>
         </div>
 
         <ul class="form-reassurance" aria-label="What to expect">
@@ -446,9 +446,9 @@
       <div class="community-card">
 
         <div class="rich-header community-header">
-          <span class="rich-eyebrow">Join the Movement</span>
-          <h2>Join the Geezword Community</h2>
-          <p>Be the first to hear about new books, apps, games, keyboards, Kidase tools, courses, and special offers.</p>
+          <span class="rich-eyebrow">Sign Up</span>
+          <h2>Register Free</h2>
+          <p>Just your name and email &mdash; tell us what you&rsquo;re interested in and we&rsquo;ll keep you posted.</p>
         </div>
 
         <p class="form-kicker">Join in less than 30 seconds.</p>
@@ -525,7 +525,7 @@
           </ul>
         </form>
 
-        <div class="community-success" id="community-success" hidden>
+        <div class="community-success" id="community-success" role="status" aria-live="polite" hidden>
           <div class="success-mark" aria-hidden="true">&#10003;</div>
           <h3>Welcome, <span id="success-name">friend</span>!</h3>
           <p>You&rsquo;re on the list. We&rsquo;ll be in touch with new books, apps, and offers across the Geezword ecosystem.</p>
@@ -594,6 +594,19 @@
     const success  = document.getElementById("community-success");
     const nameOut  = document.getElementById("success-name");
     const submitEl = document.getElementById("join-free-button");
+
+    // "Join Free" (top registration band) → scroll to the form AND move
+    // keyboard focus into the first field so keyboard/screen-reader users
+    // land ready to type, not stranded on the button.
+    const registerCta = document.getElementById("join-free-cta");
+    if (registerCta && form) {
+      registerCta.addEventListener("click", () => {
+        window.setTimeout(() => {
+          const firstField = form.elements["firstName"];
+          if (firstField && !form.hidden) firstField.focus({ preventScroll: true });
+        }, 450);
+      });
+    }
 
     if (form && success) {
       form.addEventListener("submit", async (e) => {

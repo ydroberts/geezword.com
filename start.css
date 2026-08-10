@@ -861,6 +861,74 @@ body.start-page {
 }
 
 /* =====================================================================
+   REGISTER — free community registration invite (between trust row & paths)
+   ===================================================================== */
+.section-register {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(212, 160, 39, 0.10), transparent 45%),
+    radial-gradient(circle at 85% 80%, rgba(184, 111, 74, 0.08), transparent 45%),
+    var(--gz-parchment-deep);
+}
+
+.register-card {
+  text-align: center;
+}
+
+.register-header {
+  margin-bottom: clamp(var(--gz-space-6), 3vw, var(--gz-space-12));
+}
+
+.register-header h2 {
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+}
+
+.register-header p {
+  font-size: 1.15rem;
+}
+
+.register-benefits {
+  list-style: none;
+  margin: 0 auto clamp(var(--gz-space-8), 4vw, var(--gz-space-12));
+  padding: 0;
+  max-width: 760px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gz-space-4) var(--gz-space-8);
+  text-align: left;
+}
+
+.register-benefits li {
+  font-family: var(--gz-font-body);
+  font-size: 1.05rem;
+  color: var(--gz-ink-soft);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gz-space-3);
+  line-height: 1.45;
+}
+
+.register-benefits .reassure-check {
+  margin-top: 2px;
+}
+
+.register-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--gz-space-6);
+}
+
+@media (max-width: 640px) {
+  .register-benefits {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+  }
+
+  .register-actions .btn {
+    width: 100%;
+  }
+}
+
+/* =====================================================================
    COMMUNITY SIGNUP — warm parchment band between Final CTA and Footer
    ===================================================================== */
 .section-community {

@@ -388,32 +388,68 @@ exports.syncMemberToResend = onDocumentWritten(
     const unsubscribed = m.status === "unsubscribed";
     const language = m.preferredEmailLanguage || null; // omit when unknown
     const interests = Array.isArray(m.interests) ? m.interests : [];
-    const topicIds = interests.map((s) => TOPIC_IDS[s]).filter(Boolean).sort();
+    // Only interest slugs that map to a real Topic (legacy v1 values ignored).
+    const selected = new Set(interests.filter((s) => TOPIC_IDS[s]));
 
-    // Profile hash EXCLUDES unsubscribe (tracked separately) so an unsubscribe
-    // toggle doesn't force a redundant profile push.
+    // --- Monotonic, opt-out-PRESERVING topic reconciliation ---
+    // resendTopics is our mirror of what was last pushed (slug -> opt_in/opt_out).
+    // INITIAL (first-ever sync for this member, keyed on no resendContactId):
+    //   set topics from registration interests (opt_in selected, opt_out rest).
+    // ROUTINE (every later sync): may ONLY move a topic opt_in -> opt_out when an
+    //   interest is removed. It NEVER emits opt_in, so a topic opt-out (set here
+    //   OR by the member on Resend's preference page) can never be reversed by a
+    //   language change / profile update / interest re-add. Re-opt-in requires a
+    //   separate, explicitly-recorded affirmative action (future, not here).
+    const TOPIC_SLUGS = Object.keys(TOPIC_IDS);
+    const isInitial = !m.resendContactId;
+    const newTopics = {};        // new mirror
+    const topicsToSend = [];     // [{id, subscription}] included in the API call
+    if (isInitial) {
+      for (const slug of TOPIC_SLUGS) {
+        newTopics[slug] = selected.has(slug) ? "opt_in" : "opt_out";
+        topicsToSend.push({ id: TOPIC_IDS[slug], subscription: newTopics[slug] });
+      }
+    } else {
+      const prior = m.resendTopics || {};
+      for (const slug of TOPIC_SLUGS) {
+        const prev = prior[slug] || "opt_out";
+        if (prev === "opt_in" && !selected.has(slug)) {
+          newTopics[slug] = "opt_out";                                   // interest removed
+          topicsToSend.push({ id: TOPIC_IDS[slug], subscription: "opt_out" });
+        } else {
+          newTopics[slug] = prev; // unchanged — never re-opt-in on routine sync
+        }
+      }
+    }
+
+    // Profile hash = first_name + language ONLY (topics tracked via the mirror,
+    // unsubscribe tracked separately) so unrelated changes don't force a push.
     const profileHash = crypto
       .createHash("sha256")
-      .update(JSON.stringify({ f: m.firstName || "", l: language, t: topicIds }))
+      .update(JSON.stringify({ f: m.firstName || "", l: language }))
       .digest("hex");
 
     const needsProfile = m.resendProfileHash !== profileHash;
     const needsUnsub = m.resendUnsubscribed !== unsubscribed;
-    if (!needsProfile && !needsUnsub) return; // already in sync — breaks loops
+    const needsTopics = isInitial || topicsToSend.length > 0;
+    if (!needsProfile && !needsUnsub && !needsTopics) return; // in sync — breaks loops
 
     // NOTE: we call the Resend REST API directly (not the SDK). The v4 SDK
     // silently drops first_name/properties/topics on contacts; REST does not.
     // Custom properties `language` and `member_id` are pre-defined at the
     // account level (POST /contact-properties) — required or REST returns 422.
+    // Language targeting is NOT done via Resend segments (Option C): language
+    // lives here + as a mirrored contact property; the send system queries
+    // Firestore members by preferredEmailLanguage at send time.
     const properties = { member_id: memberId };
-    if (language) properties.language = language; // no language => excluded from lang segments
+    if (language) properties.language = language;
     const payload = {
       email,
       first_name: (m.firstName || "").toString(),
       unsubscribed,
       properties,
-      topics: topicIds, // opt-in to matching interest topics
     };
+    if (topicsToSend.length) payload.topics = topicsToSend; // {id, subscription}[]
 
     const apiBase = `https://api.resend.com/audiences/${RESEND_AUDIENCE_ID}/contacts`;
     const apiHeaders = {
@@ -445,6 +481,8 @@ exports.syncMemberToResend = onDocumentWritten(
           resendUnsubscribed: unsubscribed,
           resendProfileHash: profileHash,
           resendContactId: contactId || null,
+          resendTopics: newTopics,      // opt-out-preserving mirror
+          topicsInitialized: true,
           resendSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
           resendSyncError: null,
         },

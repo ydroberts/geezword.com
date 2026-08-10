@@ -401,7 +401,10 @@ exports.syncMemberToResend = onDocumentWritten(
     const needsUnsub = m.resendUnsubscribed !== unsubscribed;
     if (!needsProfile && !needsUnsub) return; // already in sync — breaks loops
 
-    const resend = new Resend(RESEND_API_KEY.value());
+    // NOTE: we call the Resend REST API directly (not the SDK). The v4 SDK
+    // silently drops first_name/properties/topics on contacts; REST does not.
+    // Custom properties `language` and `member_id` are pre-defined at the
+    // account level (POST /contact-properties) — required or REST returns 422.
     const properties = { member_id: memberId };
     if (language) properties.language = language; // no language => excluded from lang segments
     const payload = {
@@ -412,27 +415,30 @@ exports.syncMemberToResend = onDocumentWritten(
       topics: topicIds, // opt-in to matching interest topics
     };
 
+    const apiBase = `https://api.resend.com/audiences/${RESEND_AUDIENCE_ID}/contacts`;
+    const apiHeaders = {
+      Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+      "Content-Type": "application/json",
+    };
+    const body = JSON.stringify(payload);
+
     try {
-      // Upsert: create in the audience; if it already exists, update by email.
       let contactId = m.resendContactId || null;
-      const created = await resend.contacts.create({
-        audienceId: RESEND_AUDIENCE_ID,
-        ...payload,
+      // Upsert: update by email; if the contact doesn't exist yet, create it.
+      let resp = await fetch(`${apiBase}/${encodeURIComponent(email)}`, {
+        method: "PATCH",
+        headers: apiHeaders,
+        body,
       });
-      if (created && created.data && created.data.id) {
-        contactId = created.data.id;
-      } else if (created && created.error) {
-        // Already exists (or other) — update by email within the audience.
-        const updated = await resend.contacts.update({
-          audienceId: RESEND_AUDIENCE_ID,
-          email,
-          ...payload,
-        });
-        if (updated && updated.error) {
-          throw new Error(`Resend contact update failed: ${updated.error.message || JSON.stringify(updated.error)}`);
-        }
-        if (updated && updated.data && updated.data.id) contactId = updated.data.id;
+      if (resp.status === 404) {
+        resp = await fetch(apiBase, { method: "POST", headers: apiHeaders, body });
       }
+      if (!resp.ok) {
+        const detail = (await resp.text()).slice(0, 200);
+        throw new Error(`Resend upsert HTTP ${resp.status}: ${detail}`);
+      }
+      const j = await resp.json().catch(() => ({}));
+      if (j && j.id) contactId = j.id;
 
       await after.ref.set(
         {

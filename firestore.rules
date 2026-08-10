@@ -16,9 +16,14 @@ service cloud.firestore {
 
     match /community-signups/{docId} {
       allow create: if
-        // Field allow-list — no surprise fields
+        // Field allow-list — no surprise fields.
+        // formVersion 2 (added 2026-08) introduced preferredEmailLanguage +
+        // formVersion. Both are OPTIONAL in the allow-list so that any older
+        // client/form (v1, which omits them) can still submit successfully;
+        // when preferredEmailLanguage IS present it must be one of ti/am/en.
         request.resource.data.keys().hasOnly(
-          ['firstName', 'email', 'interests', 'source', 'createdAt']
+          ['firstName', 'email', 'preferredEmailLanguage', 'interests',
+           'source', 'formVersion', 'createdAt']
         )
 
         // firstName: required string, 1–80 chars
@@ -32,13 +37,30 @@ service cloud.firestore {
         && request.resource.data.email.size() <= 200
         && request.resource.data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$')
 
-        // interests: list, at most 10 entries (UI shows 5)
+        // preferredEmailLanguage: OPTIONAL for back-compat with v1 clients;
+        // when present must be exactly one of the supported codes.
+        && (
+          !('preferredEmailLanguage' in request.resource.data)
+          || (
+            request.resource.data.preferredEmailLanguage is string
+            && request.resource.data.preferredEmailLanguage in ['ti', 'am', 'en']
+          )
+        )
+
+        // interests: required list, 1–10 entries (v2 UI requires ≥1)
         && request.resource.data.interests is list
+        && request.resource.data.interests.size() >= 1
         && request.resource.data.interests.size() <= 10
 
         // source: string identifying the entry point (e.g. "start-page")
         && request.resource.data.source is string
         && request.resource.data.source.size() <= 50
+
+        // formVersion: OPTIONAL for back-compat; when present must be an int
+        && (
+          !('formVersion' in request.resource.data)
+          || request.resource.data.formVersion is int
+        )
 
         // createdAt MUST be a server timestamp (prevents client clock spoofing)
         && request.resource.data.createdAt == request.time;

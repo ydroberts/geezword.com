@@ -36,6 +36,31 @@ const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const { Resend } = require("resend");
+const admin = require("firebase-admin");
+
+// Admin SDK — bypasses security rules, used here only to check whether this
+// email has signed up before (new registration vs. update).
+admin.initializeApp();
+
+// Preferred-email-language code → human label (formVersion 2+).
+const LANG_LABELS = {
+  ti: "Tigrinya (ትግርኛ)",
+  am: "Amharic (አማርኛ)",
+  en: "English",
+};
+
+// Interest slug → human label (formVersion 2+). Unknown/legacy values
+// (e.g. v1's "Learn"/"Play") fall through to the raw value.
+const INTEREST_LABELS = {
+  tigrinya: "Tigrinya learning",
+  amharic: "Amharic learning",
+  "geez-kidase": "Geez and Kidase",
+  "childrens-learning": "Children's learning",
+  "books-courses": "Books and courses",
+  games: "Games",
+  "keyboards-typing": "Keyboards and typing",
+  general: "General news and announcements",
+};
 
 // Secret pulled from Google Secret Manager at runtime — never in repo.
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
@@ -70,10 +95,42 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
     const data = snap.data() || {};
     const firstName = (data.firstName || "(no name)").toString();
     const email     = (data.email || "(no email)").toString();
-    const interests = Array.isArray(data.interests) && data.interests.length
-      ? data.interests.join(", ")
+
+    // Preferred email language (formVersion 2+). Older records won't have it.
+    const langCode = (data.preferredEmailLanguage || "").toString();
+    const language = LANG_LABELS[langCode] || (langCode || "(not specified)");
+
+    // Interests, mapped to human labels where known.
+    const interestsArr = Array.isArray(data.interests) ? data.interests : [];
+    const interests = interestsArr.length
+      ? interestsArr.map((i) => INTEREST_LABELS[i] || i).join(", ")
       : "(none selected)";
+
     const source    = (data.source || "(unknown)").toString();
+
+    // New registration vs. update: is this email already in the collection?
+    // The just-created doc is included in the query, so size > 1 means a
+    // prior submission exists for the same address.
+    let registrationType = "New registration";
+    const rawEmail = (data.email || "").toString();
+    if (rawEmail) {
+      try {
+        const prior = await admin
+          .firestore()
+          .collection("community-signups")
+          .where("email", "==", rawEmail)
+          .get();
+        if (prior.size > 1) {
+          registrationType =
+            `Update to existing registration (${prior.size} submissions for this email)`;
+        }
+      } catch (err) {
+        logger.warn("Duplicate-check query failed; reporting as unknown", {
+          error: err.message,
+        });
+        registrationType = "New or updated (duplicate check unavailable)";
+      }
+    }
     const createdAt = data.createdAt && typeof data.createdAt.toDate === "function"
       ? data.createdAt.toDate()
       : new Date();
@@ -85,14 +142,17 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
       timeStyle: "short",
     });
 
-    const subject = `New Geezword signup: ${firstName}`;
+    const isUpdate = registrationType.startsWith("Update");
+    const subject = `${isUpdate ? "Updated" : "New"} Geezword signup: ${firstName}`;
 
     // Plain-text fallback (deliverability boost + accessibility)
     const text =
-      `New Geezword community signup\n` +
+      `${isUpdate ? "Updated" : "New"} Geezword community signup\n` +
       `------------------------------\n\n` +
+      `Type:      ${registrationType}\n` +
       `Name:      ${firstName}\n` +
       `Email:     ${email}\n` +
+      `Language:  ${language}\n` +
       `Interests: ${interests}\n` +
       `Source:    ${source}\n` +
       `Signed up: ${createdAtUser} (${createdAtIso})\n\n` +
@@ -106,12 +166,14 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
 <body style="margin:0;padding:24px;background:#F4ECD8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(15,24,56,0.08);border:1px solid rgba(168,121,24,0.18);">
     <div style="background:linear-gradient(135deg,#1F2A5C 0%,#0F1838 100%);padding:24px 28px;color:#F0D88A;">
-      <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A027;font-weight:700;margin-bottom:6px;">New Signup</div>
-      <h1 style="margin:0;font-size:22px;font-weight:800;color:#F0D88A;letter-spacing:-0.3px;">${esc(firstName)} just joined Geezword.</h1>
+      <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#D4A027;font-weight:700;margin-bottom:6px;">${isUpdate ? "Updated Signup" : "New Signup"}</div>
+      <h1 style="margin:0;font-size:22px;font-weight:800;color:#F0D88A;letter-spacing:-0.3px;">${esc(firstName)} ${isUpdate ? "updated their Geezword registration." : "just joined Geezword."}</h1>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:15px;color:#1A1614;">
+      ${row("Type", esc(registrationType))}
       ${row("Name", esc(firstName))}
       ${row("Email", `<a href="mailto:${esc(email)}" style="color:#1F2A5C;text-decoration:none;font-weight:600;">${esc(email)}</a>`)}
+      ${row("Language", esc(language))}
       ${row("Interests", esc(interests))}
       ${row("Source", esc(source))}
       ${row("Signed up", esc(createdAtUser))}

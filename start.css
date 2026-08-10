@@ -1150,6 +1150,194 @@ body.start-page {
   box-shadow: 0 0 0 4px rgba(212, 160, 39, 0.30);
 }
 
+/* Required / helper text inside legends */
+.field-req {
+  font-family: var(--gz-font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: none;
+  color: var(--gz-ink-soft);
+  opacity: 0.8;
+}
+
+/* Inline validation message */
+.field-error {
+  margin: var(--gz-space-3) 0 0;
+  font-family: var(--gz-font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #B3261E;
+}
+
+/* Preferred email language — single-choice radio pills */
+.form-language {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gz-space-4);
+}
+
+.lang-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gz-space-3);
+}
+
+.lang-radio {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gz-space-4) var(--gz-space-5, 1.25rem);
+  min-height: 56px;
+  background: var(--gz-parchment-deep);
+  border: 2px solid rgba(15, 24, 56, 0.10);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen),
+              border-color var(--gz-duration-default) var(--gz-ease-pen),
+              background var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.lang-radio:hover {
+  transform: translateY(-2px);
+  border-color: rgba(168, 121, 24, 0.45);
+}
+
+/* Hide the native radio; the label pill is the control */
+.lang-radio input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lang-name {
+  font-family: var(--gz-font-body);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gz-ink);
+}
+
+.lang-native {
+  font-family: var(--gz-font-ethiopic-text);
+  font-weight: 700;
+  color: var(--gz-saffron-deep);
+  margin-left: 0.35em;
+  transition: color var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.lang-radio:has(input:checked) {
+  background: linear-gradient(135deg, var(--gz-saffron-pale), var(--gz-saffron));
+  border-color: var(--gz-saffron-deep);
+  box-shadow: 0 10px 24px rgba(15, 24, 56, 0.18);
+}
+
+.lang-radio:has(input:checked) .lang-native {
+  color: var(--gz-ink);
+}
+
+.lang-radio:has(input:focus-visible) {
+  box-shadow: 0 0 0 4px rgba(212, 160, 39, 0.30);
+}
+
+/* Interests — text chips (v2 taxonomy, 8 options) */
+.topics-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gz-space-3);
+}
+
+.topic-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gz-space-3);
+  padding: var(--gz-space-3) var(--gz-space-4);
+  background: var(--gz-parchment-deep);
+  border: 2px solid rgba(15, 24, 56, 0.10);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform var(--gz-duration-default) var(--gz-ease-pen),
+              border-color var(--gz-duration-default) var(--gz-ease-pen),
+              background var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.topic-chip:hover {
+  transform: translateY(-2px);
+  border-color: rgba(168, 121, 24, 0.45);
+}
+
+.topic-chip input[type="checkbox"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.topic-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid rgba(15, 24, 56, 0.25);
+  background: var(--gz-parchment);
+  flex-shrink: 0;
+  position: relative;
+  transition: background var(--gz-duration-default) var(--gz-ease-pen),
+              border-color var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.topic-box::after {
+  content: "\2713";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--gz-ink);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--gz-duration-default) var(--gz-ease-pen),
+              transform var(--gz-duration-default) var(--gz-ease-pen);
+}
+
+.topic-name {
+  font-family: var(--gz-font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gz-ink);
+}
+
+.topic-chip:has(input:checked) {
+  background: linear-gradient(135deg, var(--gz-saffron-pale), var(--gz-saffron));
+  border-color: var(--gz-saffron-deep);
+  box-shadow: 0 8px 20px rgba(15, 24, 56, 0.16);
+}
+
+.topic-chip:has(input:checked) .topic-box {
+  background: var(--gz-ink);
+  border-color: var(--gz-ink);
+}
+
+.topic-chip:has(input:checked) .topic-box::after {
+  color: var(--gz-saffron);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.topic-chip:has(input:focus-visible) {
+  box-shadow: 0 0 0 4px rgba(212, 160, 39, 0.30);
+}
+
 .join-button {
   align-self: stretch;
   width: 100%;

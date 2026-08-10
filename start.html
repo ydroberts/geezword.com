@@ -472,46 +472,83 @@
             </label>
           </div>
 
-          <fieldset class="form-interests">
-            <legend class="form-label">I&rsquo;m interested in</legend>
-            <div class="interests-grid">
+          <fieldset class="form-language" id="language-fieldset" aria-describedby="language-error">
+            <legend class="form-label">Which language would you prefer for Geezword emails? <span class="field-req">(required)</span></legend>
+            <div class="lang-grid">
 
-              <label class="interest-check interest-learn">
-                <input type="checkbox" name="interests" value="Learn">
-                <span class="interest-glyph">&#4616;</span>
-                <span class="interest-name">Learn</span>
-                <span class="interest-tick" aria-hidden="true">&#10003;</span>
+              <label class="lang-radio">
+                <input type="radio" name="preferredEmailLanguage" value="ti" required>
+                <span class="lang-name">Tigrinya <span class="lang-native">&#4725;&#4877;&#4653;&#4763;</span></span>
               </label>
 
-              <label class="interest-check interest-play">
-                <input type="checkbox" name="interests" value="Play">
-                <span class="interest-glyph">&#4877;</span>
-                <span class="interest-name">Play</span>
-                <span class="interest-tick" aria-hidden="true">&#10003;</span>
+              <label class="lang-radio">
+                <input type="radio" name="preferredEmailLanguage" value="am" required>
+                <span class="lang-name">Amharic <span class="lang-native">&#4768;&#4635;&#4653;&#4763;</span></span>
               </label>
 
-              <label class="interest-check interest-read">
-                <input type="checkbox" name="interests" value="Read">
-                <span class="interest-glyph">&#4632;</span>
-                <span class="interest-name">Read</span>
-                <span class="interest-tick" aria-hidden="true">&#10003;</span>
-              </label>
-
-              <label class="interest-check interest-type">
-                <input type="checkbox" name="interests" value="Type">
-                <span class="interest-glyph">&#4720;</span>
-                <span class="interest-name">Type</span>
-                <span class="interest-tick" aria-hidden="true">&#10003;</span>
-              </label>
-
-              <label class="interest-check interest-kidase">
-                <input type="checkbox" name="interests" value="Kidase">
-                <span class="interest-glyph">&#4677;</span>
-                <span class="interest-name">Kidase</span>
-                <span class="interest-tick" aria-hidden="true">&#10003;</span>
+              <label class="lang-radio">
+                <input type="radio" name="preferredEmailLanguage" value="en" required>
+                <span class="lang-name">English</span>
               </label>
 
             </div>
+            <p class="field-error" id="language-error" role="alert" hidden>Please choose a preferred email language.</p>
+          </fieldset>
+
+          <fieldset class="form-interests" id="interests-fieldset" aria-describedby="interests-error">
+            <legend class="form-label">Which Geezword resources interest you? <span class="field-req">(select all that apply)</span></legend>
+            <div class="interests-grid topics-grid">
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="tigrinya">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Tigrinya learning</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="amharic">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Amharic learning</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="geez-kidase">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Geez and Kidase</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="childrens-learning">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Children&rsquo;s learning</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="books-courses">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Books and courses</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="games">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Games</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="keyboards-typing">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Keyboards and typing</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="general">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">General Geezword news and announcements</span>
+              </label>
+
+            </div>
+            <p class="field-error" id="interests-error" role="alert" hidden>Please select at least one interest.</p>
           </fieldset>
 
           <button type="submit" class="btn btn-primary btn-xl join-button" id="join-free-button">
@@ -529,6 +566,7 @@
           <div class="success-mark" aria-hidden="true">&#10003;</div>
           <h3>Welcome, <span id="success-name">friend</span>!</h3>
           <p>You&rsquo;re on the list. We&rsquo;ll be in touch with new books, apps, and offers across the Geezword ecosystem.</p>
+          <p class="success-detail" id="success-detail"></p>
         </div>
 
       </div>
@@ -608,6 +646,14 @@
       });
     }
 
+    // Human-readable labels for the chosen email language (used in the
+    // success confirmation). Keys are the stable stored codes.
+    const LANG_LABELS = { ti: "Tigrinya", am: "Amharic", en: "English" };
+
+    const langError      = document.getElementById("language-error");
+    const interestsError = document.getElementById("interests-error");
+    const detailOut      = document.getElementById("success-detail");
+
     if (form && success) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -619,9 +665,28 @@
           return;
         }
 
+        // Preferred email language — required, single choice.
+        const langEl = form.querySelector('input[name="preferredEmailLanguage"]:checked');
+        const preferredEmailLanguage = langEl ? langEl.value : "";
+        if (!preferredEmailLanguage) {
+          if (langError) langError.hidden = false;
+          const firstLang = form.querySelector('input[name="preferredEmailLanguage"]');
+          if (firstLang) firstLang.focus();
+          return;
+        }
+        if (langError) langError.hidden = true;
+
+        // Interests — required, at least one selection.
         const interests = Array.from(
           form.querySelectorAll('input[name="interests"]:checked')
         ).map(b => b.value);
+        if (interests.length === 0) {
+          if (interestsError) interestsError.hidden = false;
+          const firstInterest = form.querySelector('input[name="interests"]');
+          if (firstInterest) firstInterest.focus();
+          return;
+        }
+        if (interestsError) interestsError.hidden = true;
 
         const originalLabel = submitEl ? submitEl.innerHTML : "";
         if (submitEl) {
@@ -629,7 +694,14 @@
           submitEl.innerHTML = "Joining…";
         }
 
-        const payload = { firstName, email, interests, source: "start-page" };
+        const payload = {
+          firstName,
+          email,
+          preferredEmailLanguage,
+          interests,
+          source: "start-page",
+          formVersion: 2,
+        };
 
         let savedRemote = false;
         if (db) {
@@ -659,6 +731,11 @@
         }
 
         if (nameOut) nameOut.textContent = firstName;
+        if (detailOut) {
+          const langLabel = LANG_LABELS[preferredEmailLanguage] || "your chosen language";
+          detailOut.textContent =
+            "We’ll send your Geezword emails in " + langLabel + ".";
+        }
         form.hidden = true;
         success.hidden = false;
         success.scrollIntoView({ behavior: "smooth", block: "center" });

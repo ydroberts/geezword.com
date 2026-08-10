@@ -331,11 +331,19 @@ exports.syncMemberOnSignup = onDocumentCreated(
         } else {
           // Existing member — merge latest prefs but DO NOT touch `status`
           // (preserves any unsubscribe) or `firstSeenAt`.
-          tx.set(
-            ref,
-            { ...latest, signupCount: FieldValue.increment(1) },
-            { merge: true }
-          );
+          const patch = { ...latest, signupCount: FieldValue.increment(1) };
+          // One-time, SERVER-GENERATED topic re-opt-in: if THIS form submission
+          // re-selects an interest the member had previously DECLINED (mirror
+          // opt_out), record it so syncMemberToResend can re-opt them in. This
+          // is the trusted, form-driven affirmative action — the browser can't
+          // set this field (members is server-only). A background/profile/
+          // language update never runs this flow, so it can't reverse a decline.
+          const existingTopics = (existing.data() || {}).resendTopics || {};
+          const submitted = (Array.isArray(data.interests) ? data.interests : [])
+            .filter((s) => TOPIC_IDS[s]);
+          const reopt = submitted.filter((s) => existingTopics[s] === "opt_out");
+          if (reopt.length) patch.topicReoptIn = reopt;
+          tx.set(ref, patch, { merge: true });
         }
       });
       logger.info("Member synced", {
@@ -391,34 +399,45 @@ exports.syncMemberToResend = onDocumentWritten(
     // Only interest slugs that map to a real Topic (legacy v1 values ignored).
     const selected = new Set(interests.filter((s) => TOPIC_IDS[s]));
 
-    // --- Monotonic, opt-out-PRESERVING topic reconciliation ---
-    // resendTopics is our mirror of what was last pushed (slug -> opt_in/opt_out).
-    // INITIAL (first-ever sync for this member, keyed on no resendContactId):
-    //   set topics from registration interests (opt_in selected, opt_out rest).
-    // ROUTINE (every later sync): may ONLY move a topic opt_in -> opt_out when an
-    //   interest is removed. It NEVER emits opt_in, so a topic opt-out (set here
-    //   OR by the member on Resend's preference page) can never be reversed by a
-    //   language change / profile update / interest re-add. Re-opt-in requires a
-    //   separate, explicitly-recorded affirmative action (future, not here).
+    // --- 3-state, opt-out-PRESERVING topic reconciliation ---
+    // Mirror `resendTopics` stores only MEANINGFUL states per slug:
+    //   "opt_in" (active) | "opt_out" (declined). ABSENT = default/never-engaged.
+    // Transitions:
+    //   default + selected                  -> opt_in   (genuinely new interest)
+    //   opt_in  + not selected              -> opt_out  (interest removed = decline)
+    //   opt_in  + selected                  -> keep (never re-send; preserves a
+    //                                          Resend-side opt-out of an active topic)
+    //   opt_out (declined)                  -> FROZEN — never auto re-opt-in...
+    //   opt_out + selected + topicReoptIn   -> opt_in   (...except an EXPLICIT,
+    //                                          server-generated one-time re-opt from a
+    //                                          form re-selection; then cleared+consumed)
+    // topicReoptIn is written ONLY by syncMemberOnSignup (trusted server flow) from a
+    // form submission — the browser can't write it (members is server-only).
     const TOPIC_SLUGS = Object.keys(TOPIC_IDS);
     const isInitial = !m.resendContactId;
-    const newTopics = {};        // new mirror
+    const prior = m.resendTopics || {};
+    const reopt = new Set(Array.isArray(m.topicReoptIn) ? m.topicReoptIn : []);
+    const hadReopt = reopt.size > 0;
+    const newTopics = {};        // new mirror (only opt_in/opt_out keys)
     const topicsToSend = [];     // [{id, subscription}] included in the API call
-    if (isInitial) {
-      for (const slug of TOPIC_SLUGS) {
-        newTopics[slug] = selected.has(slug) ? "opt_in" : "opt_out";
-        topicsToSend.push({ id: TOPIC_IDS[slug], subscription: newTopics[slug] });
-      }
-    } else {
-      const prior = m.resendTopics || {};
-      for (const slug of TOPIC_SLUGS) {
-        const prev = prior[slug] || "opt_out";
-        if (prev === "opt_in" && !selected.has(slug)) {
-          newTopics[slug] = "opt_out";                                   // interest removed
-          topicsToSend.push({ id: TOPIC_IDS[slug], subscription: "opt_out" });
-        } else {
-          newTopics[slug] = prev; // unchanged — never re-opt-in on routine sync
-        }
+    const setState = (slug, state) => {
+      newTopics[slug] = state;
+      topicsToSend.push({ id: TOPIC_IDS[slug], subscription: state });
+    };
+    for (const slug of TOPIC_SLUGS) {
+      const prev = prior[slug];               // undefined | "opt_in" | "opt_out"
+      const sel = selected.has(slug);
+      if (isInitial) {
+        if (sel) setState(slug, "opt_in");    // registration choice; unselected stay absent/default
+      } else if (reopt.has(slug) && sel) {
+        setState(slug, "opt_in");             // explicit form re-selection of a declined topic
+      } else if (prev === undefined) {
+        if (sel) setState(slug, "opt_in");    // genuinely new, never declined
+      } else if (prev === "opt_in") {
+        if (sel) newTopics[slug] = "opt_in";  // still active — carry forward, DON'T re-send
+        else setState(slug, "opt_out");       // removed = decline
+      } else {                                // prev === "opt_out" (declined)
+        newTopics[slug] = "opt_out";          // frozen — never auto re-opt-in
       }
     }
 
@@ -431,7 +450,7 @@ exports.syncMemberToResend = onDocumentWritten(
 
     const needsProfile = m.resendProfileHash !== profileHash;
     const needsUnsub = m.resendUnsubscribed !== unsubscribed;
-    const needsTopics = isInitial || topicsToSend.length > 0;
+    const needsTopics = isInitial || topicsToSend.length > 0 || hadReopt;
     if (!needsProfile && !needsUnsub && !needsTopics) return; // in sync — breaks loops
 
     // NOTE: we call the Resend REST API directly (not the SDK). The v4 SDK
@@ -476,19 +495,19 @@ exports.syncMemberToResend = onDocumentWritten(
       const j = await resp.json().catch(() => ({}));
       if (j && j.id) contactId = j.id;
 
-      await after.ref.set(
-        {
-          resendUnsubscribed: unsubscribed,
-          resendProfileHash: profileHash,
-          resendContactId: contactId || null,
-          resendTopics: newTopics,      // opt-out-preserving mirror
-          topicsInitialized: true,
-          resendSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
-          resendSyncError: null,
-        },
-        { merge: true }
-      );
-      logger.info("Member → Resend synced", { memberId, unsubscribed });
+      const writeBack = {
+        resendUnsubscribed: unsubscribed,
+        resendProfileHash: profileHash,
+        resendContactId: contactId || null,
+        resendTopics: newTopics,      // 3-state mirror (opt_in/opt_out; absent=default)
+        topicsInitialized: true,
+        resendSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+        resendSyncError: null,
+      };
+      // Consume the one-time re-opt instruction so it can never replay.
+      if (hadReopt) writeBack.topicReoptIn = admin.firestore.FieldValue.delete();
+      await after.ref.set(writeBack, { merge: true });
+      logger.info("Member → Resend synced", { memberId, unsubscribed, reopt: hadReopt });
     } catch (err) {
       await after.ref.set(
         { resendSyncError: (err.message || "sync error").slice(0, 300) },

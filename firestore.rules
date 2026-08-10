@@ -70,6 +70,15 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // Canonical member table (one row per normalized email), maintained
+    // exclusively by the syncMemberOnSignup Cloud Function via the Admin SDK
+    // (which bypasses these rules). No client access — it holds the email
+    // list and unsubscribe status, which must never be publicly readable or
+    // writable. Explicit here for documentation; the catch-all would deny too.
+    match /members/{memberId} {
+      allow read, write: if false;
+    }
+
     // Default deny for any other collection. Tighten/relax later as needed.
     match /{document=**} {
       allow read, write: if false;

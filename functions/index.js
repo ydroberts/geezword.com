@@ -37,10 +37,23 @@ const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const { Resend } = require("resend");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 
-// Admin SDK — bypasses security rules, used here only to check whether this
-// email has signed up before (new registration vs. update).
+// Admin SDK — bypasses security rules. Used to (a) check new-vs-update on
+// signup, and (b) maintain the canonical members/{emailHash} table.
 admin.initializeApp();
+
+// Canonical email normalisation — trim + lowercase — applied BEFORE hashing
+// so "  Me@Ex.com " and "me@ex.com" map to the same member. Used for both
+// the member document id and the stored `email` field.
+function normalizeEmail(raw) {
+  return (raw || "").toString().trim().toLowerCase();
+}
+
+// Stable, path-safe member id: sha256 of the normalized email (hex).
+function memberIdFor(normalizedEmail) {
+  return crypto.createHash("sha256").update(normalizedEmail).digest("hex");
+}
 
 // Preferred-email-language code → human label (formVersion 2+).
 const LANG_LABELS = {
@@ -212,6 +225,106 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
         error: err.message,
       });
       throw err; // let the platform retry per `retry: true`
+    }
+  }
+);
+
+/**
+ * syncMemberOnSignup — maintains the canonical members/{emailHash} table.
+ *
+ * Fires on every new community-signups doc and upserts one member record per
+ * (normalized) email. Runs independently of notifyOnCommunitySignup.
+ *
+ * Guarantees (per product requirements):
+ *  - Email is trimmed + lowercased BEFORE hashing → one member per person.
+ *  - LATEST preferred language + interests + firstName win on each signup.
+ *  - An `unsubscribed` member is NEVER silently re-subscribed: on update we
+ *    do not write `status`, so a prior opt-out is preserved. (Phase 2 keeps
+ *    this in two-way sync with Resend so opt-outs can't be emailed.)
+ *  - `firstSeenAt` is written once (on member creation) and never overwritten.
+ *
+ * The members collection is server-only (see firestore.rules) — this function
+ * uses the Admin SDK, which bypasses rules.
+ */
+exports.syncMemberOnSignup = onDocumentCreated(
+  {
+    document: "community-signups/{docId}",
+    region: "us-central1",
+    memory: "256MiB",
+    timeoutSeconds: 30,
+    retry: true,
+  },
+  async (event) => {
+    const snap = event.data;
+    if (!snap) {
+      logger.warn("syncMemberOnSignup fired without snapshot — skipping");
+      return;
+    }
+    const data = snap.data() || {};
+
+    const email = normalizeEmail(data.email);
+    if (!email) {
+      logger.warn("syncMemberOnSignup: signup has no email — skipping", {
+        signupId: event.params.docId,
+      });
+      return;
+    }
+
+    const memberId = memberIdFor(email);
+    const ref = admin.firestore().collection("members").doc(memberId);
+    const FieldValue = admin.firestore.FieldValue;
+    const serverNow = FieldValue.serverTimestamp();
+
+    // Latest-wins fields written on both create and update.
+    const latest = {
+      email,
+      firstName: (data.firstName || "").toString(),
+      interests: Array.isArray(data.interests) ? data.interests : [],
+      source: (data.source || "").toString(),
+      updatedAt: serverNow,
+      lastSignupAt: data.createdAt || serverNow,
+    };
+    // Only overwrite language/formVersion when THIS signup carries them, so a
+    // later v1-style submission can't erase a previously chosen language.
+    if (data.preferredEmailLanguage) {
+      latest.preferredEmailLanguage = data.preferredEmailLanguage;
+    }
+    if (data.formVersion !== undefined && data.formVersion !== null) {
+      latest.formVersion = data.formVersion;
+    }
+
+    try {
+      await admin.firestore().runTransaction(async (tx) => {
+        const existing = await tx.get(ref);
+        if (!existing.exists) {
+          // New member — set defaults that must never be clobbered later.
+          tx.set(ref, {
+            ...latest,
+            status: "subscribed",
+            firstSeenAt: data.createdAt || serverNow,
+            signupCount: 1,
+          });
+        } else {
+          // Existing member — merge latest prefs but DO NOT touch `status`
+          // (preserves any unsubscribe) or `firstSeenAt`.
+          tx.set(
+            ref,
+            { ...latest, signupCount: FieldValue.increment(1) },
+            { merge: true }
+          );
+        }
+      });
+      logger.info("Member synced", {
+        signupId: event.params.docId,
+        memberId,
+        email,
+      });
+    } catch (err) {
+      logger.error("syncMemberOnSignup failed", {
+        signupId: event.params.docId,
+        error: err.message,
+      });
+      throw err; // retry per `retry: true`
     }
   }
 );

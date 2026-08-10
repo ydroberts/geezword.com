@@ -32,10 +32,12 @@
  *   or  https://console.firebase.google.com/project/geezword-com/functions/logs
  */
 
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onRequest } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const { Resend } = require("resend");
+const { Webhook } = require("svix");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 
@@ -75,8 +77,29 @@ const INTEREST_LABELS = {
   general: "General news and announcements",
 };
 
-// Secret pulled from Google Secret Manager at runtime — never in repo.
+// Secrets pulled from Google Secret Manager at runtime — never in repo.
 const RESEND_API_KEY = defineSecret("RESEND_API_KEY");
+// Svix signing secret for the Resend webhook endpoint. Set during dashboard
+// setup: firebase functions:secrets:set RESEND_WEBHOOK_SECRET
+const RESEND_WEBHOOK_SECRET = defineSecret("RESEND_WEBHOOK_SECRET");
+
+// Resend Audience for the Geezword community (non-secret id). Created 2026-08-10.
+const RESEND_AUDIENCE_ID = "4edf1584-2df3-4a33-ad54-a9052169f9c8";
+
+// Interest slug → Resend Topic id (created 2026-08-10, default_subscription
+// opt_out). A member is opted IN to the topics matching their interests[].
+// Legacy v1 interest values (Learn/Read/Type) intentionally have no mapping,
+// so legacy members carry no topics until they re-register.
+const TOPIC_IDS = {
+  general:              "c975d6a1-bba0-456c-acfd-661630d2aa91",
+  tigrinya:             "9595a360-7e54-4460-a0d1-b3657bd6e0f4",
+  amharic:              "d00dd082-6e5e-4fbe-81cc-0745b72ecee9",
+  "childrens-learning": "4734d734-307d-46a3-bd87-c91e11664719",
+  "geez-kidase":        "4aa6f9f3-12ed-4b20-95b6-ac1a72c5267b",
+  "books-courses":      "f920859b-987a-48b2-8626-54e0f999671f",
+  games:                "7037886c-02b8-4c6c-b953-dc5ff3c59e0d",
+  "keyboards-typing":   "ea39c978-4cb6-41f2-8b10-f4ebac7c22e6",
+};
 
 // Who gets the notification email. Hardcoded since it's the owner address.
 const NOTIFY_TO = "ydroberts@gmail.com";
@@ -216,8 +239,9 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
       logger.info("Notification sent", {
         signupId: event.params.docId,
         resendId: result.data && result.data.id,
-        firstName,
-        email,
+        // No PII in logs — identify the member by the same stable hash used
+        // as the members/{id} document id.
+        memberId: rawEmail ? memberIdFor(normalizeEmail(rawEmail)) : null,
       });
     } catch (err) {
       logger.error("Failed to send notification email", {
@@ -316,8 +340,7 @@ exports.syncMemberOnSignup = onDocumentCreated(
       });
       logger.info("Member synced", {
         signupId: event.params.docId,
-        memberId,
-        email,
+        memberId, // hash only — no raw email/name in logs
       });
     } catch (err) {
       logger.error("syncMemberOnSignup failed", {
@@ -325,6 +348,223 @@ exports.syncMemberOnSignup = onDocumentCreated(
         error: err.message,
       });
       throw err; // retry per `retry: true`
+    }
+  }
+);
+
+/**
+ * syncMemberToResend — pushes the canonical member's profile + subscription
+ * state into the Resend Audience as a Contact. Triggered on members/{id}
+ * writes. Sending emails is NOT done here — this only syncs contact data.
+ *
+ * Loop prevention: we mirror the last-synced state on the member document
+ *  - resendUnsubscribed  : last unsubscribed value pushed to Resend
+ *  - resendProfileHash   : hash of {first_name, language, sorted topics}
+ * and skip the Resend API call when nothing changed. The webhook writes these
+ * mirrors too, so an inbound unsubscribe never bounces back out and loops.
+ *
+ * Unsubscribe authority: `unsubscribed` sent to Resend is derived from
+ * members.status; an unsubscribed member is always pushed as unsubscribed:true
+ * and is never re-subscribed by a profile/interest change.
+ */
+exports.syncMemberToResend = onDocumentWritten(
+  {
+    document: "members/{memberId}",
+    region: "us-central1",
+    secrets: [RESEND_API_KEY],
+    memory: "256MiB",
+    timeoutSeconds: 30,
+    retry: true,
+  },
+  async (event) => {
+    const after = event.data && event.data.after;
+    if (!after || !after.exists) return; // deletion — nothing to sync
+    const m = after.data() || {};
+    const memberId = event.params.memberId;
+
+    const email = normalizeEmail(m.email);
+    if (!email) return;
+
+    const unsubscribed = m.status === "unsubscribed";
+    const language = m.preferredEmailLanguage || null; // omit when unknown
+    const interests = Array.isArray(m.interests) ? m.interests : [];
+    const topicIds = interests.map((s) => TOPIC_IDS[s]).filter(Boolean).sort();
+
+    // Profile hash EXCLUDES unsubscribe (tracked separately) so an unsubscribe
+    // toggle doesn't force a redundant profile push.
+    const profileHash = crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ f: m.firstName || "", l: language, t: topicIds }))
+      .digest("hex");
+
+    const needsProfile = m.resendProfileHash !== profileHash;
+    const needsUnsub = m.resendUnsubscribed !== unsubscribed;
+    if (!needsProfile && !needsUnsub) return; // already in sync — breaks loops
+
+    const resend = new Resend(RESEND_API_KEY.value());
+    const properties = { member_id: memberId };
+    if (language) properties.language = language; // no language => excluded from lang segments
+    const payload = {
+      email,
+      first_name: (m.firstName || "").toString(),
+      unsubscribed,
+      properties,
+      topics: topicIds, // opt-in to matching interest topics
+    };
+
+    try {
+      // Upsert: create in the audience; if it already exists, update by email.
+      let contactId = m.resendContactId || null;
+      const created = await resend.contacts.create({
+        audienceId: RESEND_AUDIENCE_ID,
+        ...payload,
+      });
+      if (created && created.data && created.data.id) {
+        contactId = created.data.id;
+      } else if (created && created.error) {
+        // Already exists (or other) — update by email within the audience.
+        const updated = await resend.contacts.update({
+          audienceId: RESEND_AUDIENCE_ID,
+          email,
+          ...payload,
+        });
+        if (updated && updated.error) {
+          throw new Error(`Resend contact update failed: ${updated.error.message || JSON.stringify(updated.error)}`);
+        }
+        if (updated && updated.data && updated.data.id) contactId = updated.data.id;
+      }
+
+      await after.ref.set(
+        {
+          resendUnsubscribed: unsubscribed,
+          resendProfileHash: profileHash,
+          resendContactId: contactId || null,
+          resendSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+          resendSyncError: null,
+        },
+        { merge: true }
+      );
+      logger.info("Member → Resend synced", { memberId, unsubscribed });
+    } catch (err) {
+      await after.ref.set(
+        { resendSyncError: (err.message || "sync error").slice(0, 300) },
+        { merge: true }
+      );
+      logger.error("syncMemberToResend failed", { memberId, error: err.message });
+      throw err; // retry per `retry: true`
+    }
+  }
+);
+
+/**
+ * resendWebhook — receives Resend (Svix-signed) events and records
+ * unsubscribes / complaints as authoritative in Firestore.
+ *
+ * Security: every request is Svix-signature-verified against
+ * RESEND_WEBHOOK_SECRET using the RAW body; invalid/missing signatures are
+ * rejected with 400. Duplicate deliveries are ignored via svix-id dedup.
+ * No PII is logged (member hash + event type + svix-id only).
+ *
+ * Authority: an unsubscribe/complaint sets members.status = "unsubscribed"
+ * and is never reversed by later syncs (mirrors are set so the outbound sync
+ * treats Resend as already-unsubscribed).
+ */
+exports.resendWebhook = onRequest(
+  {
+    region: "us-central1",
+    secrets: [RESEND_WEBHOOK_SECRET],
+    memory: "256MiB",
+    timeoutSeconds: 30,
+  },
+  async (req, res) => {
+    // 1. Verify Svix signature over the RAW body.
+    let evt;
+    try {
+      const wh = new Webhook(RESEND_WEBHOOK_SECRET.value());
+      const payload = req.rawBody ? req.rawBody.toString("utf8") : JSON.stringify(req.body);
+      evt = wh.verify(payload, {
+        "svix-id": req.header("svix-id"),
+        "svix-timestamp": req.header("svix-timestamp"),
+        "svix-signature": req.header("svix-signature"),
+      });
+    } catch (err) {
+      logger.warn("resendWebhook: signature verification failed");
+      res.status(400).send("invalid signature");
+      return;
+    }
+
+    const svixId = req.header("svix-id");
+    const type = evt && evt.type;
+    const d = (evt && evt.data) || {};
+
+    // 2. Determine whether this event is an unsubscribe/complaint and for whom.
+    let reason = null;
+    if (type === "contact.updated" && d.unsubscribed === true) reason = "user_unsubscribe";
+    else if (type === "email.complained") reason = "complaint";
+    else if (type === "suppression.added") reason = "suppression";
+
+    // Extract the recipient email across event shapes.
+    const rawEmail =
+      d.email ||
+      (Array.isArray(d.to) ? d.to[0] : d.to) ||
+      (d.recipient && d.recipient.email) ||
+      "";
+    const email = normalizeEmail(rawEmail);
+
+    if (!reason || !email) {
+      // Not an unsubscribe we act on (or no email) — ack so Resend won't retry.
+      res.status(200).send("ignored");
+      return;
+    }
+
+    const memberId = memberIdFor(email);
+    const db = admin.firestore();
+    const dedupRef = db.collection("processed_webhooks").doc(svixId);
+    const memberRef = db.collection("members").doc(memberId);
+    const FieldValue = admin.firestore.FieldValue;
+    const eventTime = evt && evt.created_at ? new Date(evt.created_at) : null;
+
+    try {
+      await db.runTransaction(async (tx) => {
+        // Idempotency: skip if this svix-id was already handled.
+        const seen = await tx.get(dedupRef);
+        if (seen.exists) return;
+
+        const memberSnap = await tx.get(memberRef);
+        const alreadyUnsub =
+          memberSnap.exists && memberSnap.data().status === "unsubscribed";
+
+        if (!alreadyUnsub) {
+          const patch = {
+            email,
+            status: "unsubscribed",
+            unsubscribedAt: eventTime || FieldValue.serverTimestamp(),
+            unsubscribeReason: reason,
+            unsubscribeSource: "resend_webhook",
+            // Mirror: Resend already has them unsubscribed → outbound sync no-op.
+            resendUnsubscribed: true,
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+          if (!memberSnap.exists) {
+            // Tombstone so a future signup can't silently re-subscribe them.
+            patch.firstSeenAt = FieldValue.serverTimestamp();
+            patch.source = "resend_webhook";
+          }
+          tx.set(memberRef, patch, { merge: true });
+        }
+
+        tx.set(dedupRef, {
+          type,
+          reason,
+          receivedAt: FieldValue.serverTimestamp(),
+        });
+      });
+
+      logger.info("Unsubscribe recorded", { memberId, type, svixId });
+      res.status(200).send("ok");
+    } catch (err) {
+      logger.error("resendWebhook processing failed", { svixId, error: err.message });
+      res.status(500).send("processing error"); // Svix will retry; dedup makes it safe
     }
   }
 );

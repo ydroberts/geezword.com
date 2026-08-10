@@ -79,6 +79,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Webhook idempotency ledger (svix-id → handled). Written only by the
+    // resendWebhook Cloud Function via the Admin SDK. No client access.
+    match /processed_webhooks/{svixId} {
+      allow read, write: if false;
+    }
+
     // Default deny for any other collection. Tighten/relax later as needed.
     match /{document=**} {
       allow read, write: if false;

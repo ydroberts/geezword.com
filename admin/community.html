@@ -99,7 +99,7 @@
         <button id="apply" class="primary">Apply</button>
         <button id="clear">Clear</button>
       </div>
-      <p class="hint">Name and “Unknown language” filter only the currently loaded page. Email/Language/Status are server-side.</p>
+      <p class="hint">Language and Status apply instantly (server-side). Email applies on Enter or Apply. Name and “Unknown language” filter the currently loaded page only.</p>
 
       <div class="tablewrap">
         <table>
@@ -226,11 +226,18 @@
     }
 
     // controls
-    $("apply").onclick = () => { cursors = [null]; pageIdx = 0; load(); };
+    const reload = () => { cursors = [null]; pageIdx = 0; load(); };
+    $("apply").onclick = reload;
     $("clear").onclick = () => {
       $("f-email").value = ""; $("f-lang").value = ""; $("f-status").value = ""; $("f-name").value = "";
-      cursors = [null]; pageIdx = 0; load();
+      reload();
     };
+    // Language + Status apply instantly on change (server-side filters).
+    $("f-lang").onchange = reload;
+    $("f-status").onchange = reload;
+    // Email exact applies on Enter (or the Apply button).
+    $("f-email").addEventListener("keydown", (e) => { if (e.key === "Enter") reload(); });
+    // Name filters the currently loaded page live.
     $("f-name").oninput = () => renderRows();
     $("next").onclick = () => { if (cursors[pageIdx + 1]) { pageIdx++; load(); } };
     $("prev").onclick = () => { if (pageIdx > 0) { pageIdx--; load(); } };

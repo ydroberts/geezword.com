@@ -33,7 +33,7 @@
  */
 
 const { onDocumentCreated, onDocumentWritten } = require("firebase-functions/v2/firestore");
-const { onRequest } = require("firebase-functions/v2/https");
+const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const { logger } = require("firebase-functions");
 const { Resend } = require("resend");
@@ -642,6 +642,121 @@ exports.resendWebhook = onRequest(
     } catch (err) {
       logger.error("resendWebhook processing failed", { svixId, error: err.message });
       res.status(500).send("processing error"); // Svix will retry; dedup makes it safe
+    }
+  }
+);
+
+/**
+ * adminListMembers — READ-ONLY admin panel data source (callable).
+ *
+ * Security: requires an authenticated caller whose Firebase custom claim is
+ * `admin === true` (checked BEFORE any Firestore read). App Check is declared
+ * here; enforcement is flipped on in a later gate (monitoring first).
+ * Returns ONLY the panel's fields (see projectMember). No PII in logs.
+ * There is intentionally NO write/edit/delete/export/send path.
+ */
+const ADMIN_PAGE_DEFAULT = 25;
+const ADMIN_PAGE_MAX = 50;
+
+function isoOf(t) {
+  return t && typeof t.toDate === "function" ? t.toDate().toISOString() : null;
+}
+// Only the contract fields — everything else is redacted.
+function projectMember(m, id) {
+  const resendState = m.resendSyncError
+    ? "failed"
+    : (m.resendSyncedAt ? "synced" : "pending");
+  return {
+    id, // opaque sha256(email) doc id — one-way, non-reversible
+    firstName: (m.firstName || "").toString(),
+    email: (m.email || "").toString(),
+    preferredEmailLanguage: m.preferredEmailLanguage || null,
+    interests: Array.isArray(m.interests) ? m.interests : [],
+    status: m.status || null,
+    firstSeenAt: isoOf(m.firstSeenAt),
+    updatedAt: isoOf(m.updatedAt),
+    resendSync: { state: resendState, lastSyncedAt: isoOf(m.resendSyncedAt) },
+  };
+}
+
+exports.adminListMembers = onCall(
+  {
+    region: "us-central1",
+    memory: "256MiB",
+    timeoutSeconds: 30,
+    enforceAppCheck: false, // MONITORING first; flipped to true at the enforce gate
+  },
+  async (request) => {
+    // 1) Auth required; 2) admin claim required — BEFORE any read.
+    if (!request.auth) throw new HttpsError("unauthenticated", "Authentication required.");
+    if (request.auth.token.admin !== true) throw new HttpsError("permission-denied", "Access denied.");
+
+    // Privacy-safe audit id: truncated one-way hash of the UID (16 hex).
+    const adminHash = crypto.createHash("sha256").update(request.auth.uid).digest("hex").slice(0, 16);
+    const data = request.data || {};
+    const db = admin.firestore();
+
+    try {
+      // --- Exact normalized-email lookup (ignores paging/filters) ---
+      if (typeof data.email === "string" && data.email.trim()) {
+        const email = normalizeEmail(data.email);
+        const doc = await db.collection("members").doc(memberIdFor(email)).get();
+        const members = doc.exists ? [projectMember(doc.data(), doc.id)] : [];
+        logger.info("adminListMembers", { adminHash, op: "email", status: "ok", count: members.length });
+        return { members, nextCursor: null, pageSize: 1, totalCount: members.length, scope: { email: true } };
+      }
+
+      // --- Filtered + paginated list ---
+      const filters = data.filters || {};
+      const language = ["ti", "am", "en"].includes(filters.language) ? filters.language : null;
+      const status = ["subscribed", "unsubscribed"].includes(filters.status) ? filters.status : null;
+
+      let pageSize = Number.isInteger(data.pageSize) ? data.pageSize : ADMIN_PAGE_DEFAULT;
+      pageSize = Math.max(1, Math.min(ADMIN_PAGE_MAX, pageSize));
+
+      let q = db.collection("members");
+      if (status) q = q.where("status", "==", status);
+      if (language) q = q.where("preferredEmailLanguage", "==", language);
+      // Order by recency. (V1 uses a single-field tiebreak-free order — fine for
+      // the current small list; a __name__ tiebreaker can be added at scale.)
+      q = q.orderBy("updatedAt", "desc");
+
+      if (data.cursor) {
+        let cur;
+        try {
+          cur = JSON.parse(Buffer.from(String(data.cursor), "base64url").toString("utf8"));
+        } catch (e) {
+          throw new HttpsError("invalid-argument", "Invalid cursor.");
+        }
+        q = q.startAfter(admin.firestore.Timestamp.fromMillis(cur.u));
+      }
+
+      const snap = await q.limit(pageSize).get();
+      const members = snap.docs.map((d) => projectMember(d.data(), d.id));
+
+      let nextCursor = null;
+      if (snap.docs.length === pageSize) {
+        const u = snap.docs[snap.docs.length - 1].get("updatedAt");
+        nextCursor = Buffer.from(
+          JSON.stringify({ u: u && u.toMillis ? u.toMillis() : 0 })
+        ).toString("base64url");
+      }
+
+      // Total (filtered) via count() aggregation.
+      let countQ = db.collection("members");
+      if (status) countQ = countQ.where("status", "==", status);
+      if (language) countQ = countQ.where("preferredEmailLanguage", "==", language);
+      const totalCount = (await countQ.count().get()).data().count;
+
+      logger.info("adminListMembers", {
+        adminHash, op: "list", status: "ok", count: members.length,
+        pageSize, hasLang: !!language, hasStatus: !!status,
+      });
+      return { members, nextCursor, pageSize, totalCount, scope: { language, status } };
+    } catch (err) {
+      if (err instanceof HttpsError) throw err;
+      logger.error("adminListMembers failed", { adminHash, code: err.code || "internal" });
+      throw new HttpsError("internal", "Something went wrong.");
     }
   }
 );

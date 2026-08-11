@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Geezword Community — Admin</title>
+  <style>
+    :root{
+      --ink:#1A1614; --ink-soft:#3D332E; --parch:#F4ECD8; --parch-deep:#E8DCC0;
+      --indigo:#1F2A5C; --indigo-deep:#0F1838; --saffron:#D4A027; --saffron-deep:#A87918;
+      --white:#fff; --line:rgba(15,24,56,.12); --ok:#1E7A46; --warn:#A87918; --err:#B3261E;
+      --sans:"Segoe UI",Inter,system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--parch);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:14px 20px;background:var(--indigo);color:#F0D88A;border-bottom:3px solid var(--saffron)}
+    header h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    .card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:0 6px 20px rgba(15,24,56,.06)}
+    button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+      background:var(--white);color:var(--ink);padding:8px 14px}
+    button.primary{background:var(--saffron);border-color:var(--saffron-deep);color:var(--ink);font-weight:700}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .muted{color:var(--ink-soft)}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:14px 0}
+    .controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--saffron-deep);text-transform:uppercase;letter-spacing:.06em}
+    .controls input,.controls select{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--parch-deep);color:var(--ink);min-width:150px}
+    .hint{font-size:12px;color:var(--ink-soft);margin:2px 0 0}
+    .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+    table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:820px}
+    th{background:var(--parch-deep);text-align:left;padding:9px 11px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--indigo);border-bottom:2px solid var(--line)}
+    td{padding:9px 11px;border-bottom:1px solid #eee;vertical-align:top}
+    tr:nth-child(even) td{background:#faf6ec}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+    .pill.sub{background:#e5f3ea;color:var(--ok)} .pill.unsub{background:#fbe6e4;color:var(--err)}
+    .sync.synced{color:var(--ok)} .sync.pending{color:var(--warn)} .sync.failed{color:var(--err)}
+    .pager{display:flex;gap:10px;align-items:center;margin-top:14px}
+    .center{text-align:center;padding:30px}
+    .hidden{display:none}
+    .total{font-weight:700}
+    code.small{font-size:11px;color:var(--ink-soft)}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Geezword Community — Admin</h1>
+    <div>
+      <span id="who" class="muted" style="color:#dfe3f3;font-size:13px;margin-right:10px"></span>
+      <button id="signout" class="hidden">Sign out</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- states -->
+    <div id="state-init" class="card center muted">Loading…</div>
+
+    <div id="state-signedout" class="card center hidden">
+      <p>Administrator access only. Please sign in.</p>
+      <button id="signin" class="primary">Sign in with Google</button>
+    </div>
+
+    <div id="state-denied" class="card center hidden">
+      <p><strong>You don't have access to this page.</strong></p>
+      <p class="muted">This account is not authorized to view community members.</p>
+    </div>
+
+    <div id="state-error" class="card center hidden">
+      <p><strong>Something went wrong.</strong></p>
+      <button id="retry" class="primary">Try again</button>
+    </div>
+
+    <div id="state-authorized" class="card hidden">
+      <div><span class="total">Total members: <span id="total">—</span></span></div>
+      <div class="controls">
+        <label>Email (exact)
+          <input id="f-email" type="email" placeholder="exact email" autocomplete="off">
+        </label>
+        <label>Language
+          <select id="f-lang">
+            <option value="">All (server)</option>
+            <option value="ti">Tigrinya</option>
+            <option value="am">Amharic</option>
+            <option value="en">English</option>
+            <option value="__unknown">Unknown (loaded page only)</option>
+          </select>
+        </label>
+        <label>Status
+          <select id="f-status">
+            <option value="">All</option>
+            <option value="subscribed">Subscribed</option>
+            <option value="unsubscribed">Unsubscribed</option>
+          </select>
+        </label>
+        <label>Name contains
+          <input id="f-name" type="text" placeholder="filters loaded page" autocomplete="off">
+        </label>
+        <button id="apply" class="primary">Apply</button>
+        <button id="clear">Clear</button>
+      </div>
+      <p class="hint">Name and “Unknown language” filter only the currently loaded page. Email/Language/Status are server-side.</p>
+
+      <div class="tablewrap">
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Email</th><th>Lang</th><th>Interests</th><th>Status</th>
+            <th>First registered</th><th>Last updated</th><th>Resend sync</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div id="empty" class="center muted hidden">No members match.</div>
+
+      <div class="pager">
+        <button id="prev" disabled>‹ Prev</button>
+        <span id="pageinfo" class="muted"></span>
+        <button id="next" disabled>Next ›</button>
+      </div>
+      <p class="hint">Read-only view. Data is held in memory only and cleared on sign-out.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    import { getFunctions, httpsCallable }
+      from "https://www.gstatic.com/firebasejs/10.13.2/firebase-functions.js";
+    // NOTE: App Check init is intentionally added later (with the reCAPTCHA v3
+    // site key) before App Check is ENFORCED on adminListMembers.
+
+    const firebaseConfig = {
+      apiKey:            "AIzaSyAQ0ZXnenNaDN_YhvHyU3bX8P6tlH5L2ps",
+      authDomain:        "geezword-com.firebaseapp.com",
+      projectId:         "geezword-com",
+      storageBucket:     "geezword-com.firebasestorage.app",
+      messagingSenderId: "453691657979",
+      appId:             "1:453691657979:web:c71e971c05da4e42e06a5e"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const functions = getFunctions(app, "us-central1");
+    const adminListMembers = httpsCallable(functions, "adminListMembers");
+
+    const INTEREST_LABELS = {
+      general: "General Geezword News and Announcements",
+      tigrinya: "Tigrinya Learning", amharic: "Amharic Learning",
+      "childrens-learning": "Children's Learning", "geez-kidase": "Geez and Kidase Resources",
+      "books-courses": "Geezword Books", games: "Educational Games",
+      "keyboards-typing": "Keyboards and Typing",
+    };
+    const interestLabel = (s) => INTEREST_LABELS[s] || "Unknown interest";
+    const LANG = { ti: "Tigrinya", am: "Amharic", en: "English" };
+    const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString() : "—";
+
+    const $ = (id) => document.getElementById(id);
+    const states = ["init", "signedout", "denied", "error", "authorized"];
+    function show(name) { states.forEach((s) => $("state-" + s).classList.toggle("hidden", s !== name)); }
+
+    // pagination + last response held in memory only
+    let cursors = [null], pageIdx = 0, lastRows = [];
+
+    function renderRows() {
+      const nameQ = $("f-name").value.trim().toLowerCase();
+      const unknownLang = $("f-lang").value === "__unknown";
+      let rows = lastRows;
+      if (unknownLang) rows = rows.filter((m) => !m.preferredEmailLanguage);
+      if (nameQ) rows = rows.filter((m) => (m.firstName || "").toLowerCase().includes(nameQ));
+      const tb = $("rows"); tb.innerHTML = "";
+      rows.forEach((m) => {
+        const tr = document.createElement("tr");
+        const interests = (m.interests || []).map(interestLabel).map(esc).join(", ");
+        const st = m.status === "subscribed" ? '<span class="pill sub">subscribed</span>'
+          : m.status === "unsubscribed" ? '<span class="pill unsub">unsubscribed</span>' : "—";
+        const sy = m.resendSync || { state: "pending" };
+        tr.innerHTML =
+          `<td>${esc(m.firstName) || "—"}</td>` +
+          `<td>${esc(m.email)}</td>` +
+          `<td>${esc(LANG[m.preferredEmailLanguage] || "—")}</td>` +
+          `<td>${interests || "—"}</td>` +
+          `<td>${st}</td>` +
+          `<td>${esc(fmtDate(m.firstSeenAt))}</td>` +
+          `<td>${esc(fmtDate(m.updatedAt))}</td>` +
+          `<td class="sync ${esc(sy.state)}">${esc(sy.state)}</td>`;
+        tb.appendChild(tr);
+      });
+      $("empty").classList.toggle("hidden", rows.length > 0);
+    }
+
+    function buildRequest() {
+      const email = $("f-email").value.trim();
+      if (email) return { email };
+      const langSel = $("f-lang").value;
+      const filters = {};
+      if (["ti", "am", "en"].includes(langSel)) filters.language = langSel;
+      const status = $("f-status").value;
+      if (status) filters.status = status;
+      const req = { pageSize: 25, filters };
+      if (cursors[pageIdx]) req.cursor = cursors[pageIdx];
+      return req;
+    }
+
+    let loading = false;
+    async function load() {
+      if (loading) return; loading = true;
+      $("apply").disabled = $("next").disabled = $("prev").disabled = true;
+      try {
+        const res = (await adminListMembers(buildRequest())).data;
+        lastRows = res.members || [];
+        $("total").textContent = res.totalCount != null ? res.totalCount : "—";
+        // cursor bookkeeping
+        cursors[pageIdx + 1] = res.nextCursor || null;
+        $("pageinfo").textContent = "Page " + (pageIdx + 1);
+        show("authorized");
+        renderRows();
+        $("prev").disabled = pageIdx === 0;
+        $("next").disabled = !res.nextCursor || !!$("f-email").value.trim();
+      } catch (e) {
+        if (e && e.code === "functions/permission-denied") show("denied");
+        else if (e && e.code === "functions/unauthenticated") show("signedout");
+        else show("error");
+      } finally { loading = false; $("apply").disabled = false; }
+    }
+
+    // controls
+    $("apply").onclick = () => { cursors = [null]; pageIdx = 0; load(); };
+    $("clear").onclick = () => {
+      $("f-email").value = ""; $("f-lang").value = ""; $("f-status").value = ""; $("f-name").value = "";
+      cursors = [null]; pageIdx = 0; load();
+    };
+    $("f-name").oninput = () => renderRows();
+    $("next").onclick = () => { if (cursors[pageIdx + 1]) { pageIdx++; load(); } };
+    $("prev").onclick = () => { if (pageIdx > 0) { pageIdx--; load(); } };
+    $("retry").onclick = () => load();
+
+    $("signin").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(() => show("signedout"));
+    $("signout").onclick = () => { lastRows = []; cursors = [null]; pageIdx = 0; signOut(auth); };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        $("who").textContent = ""; $("signout").classList.add("hidden");
+        lastRows = []; show("signedout"); return;
+      }
+      $("who").textContent = "Signed in as " + (user.displayName || user.email || "");
+      $("signout").classList.remove("hidden");
+      cursors = [null]; pageIdx = 0;
+      await load();
+    });
+  </script>
+</body>
+</html>

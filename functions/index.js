@@ -67,14 +67,14 @@ const LANG_LABELS = {
 // Interest slug → human label (formVersion 2+). Unknown/legacy values
 // (e.g. v1's "Learn"/"Play") fall through to the raw value.
 const INTEREST_LABELS = {
-  tigrinya: "Tigrinya learning",
-  amharic: "Amharic learning",
-  "geez-kidase": "Geez and Kidase",
-  "childrens-learning": "Children's learning",
-  "books-courses": "Books and courses",
-  games: "Games",
-  "keyboards-typing": "Keyboards and typing",
-  general: "General news and announcements",
+  tigrinya: "Tigrinya Learning",
+  amharic: "Amharic Learning",
+  "geez-kidase": "Geez and Kidase Resources",
+  "childrens-learning": "Children's Learning",
+  "books-courses": "Geezword Books",
+  games: "Educational Games",
+  "keyboards-typing": "Keyboards and Typing",
+  general: "General Geezword News and Announcements",
 };
 
 // Secrets pulled from Google Secret Manager at runtime — never in repo.

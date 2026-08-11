@@ -85,6 +85,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Server-only configuration (e.g. config/email — feature flags, kill
+    // switch, test-mode allowlist). Read/written exclusively by Cloud
+    // Functions via the Admin SDK (which bypasses these rules). No client
+    // access: never publicly readable or writable.
+    match /config/{document} {
+      allow read, write: if false;
+    }
+
     // Default deny for any other collection. Tighten/relax later as needed.
     match /{document=**} {
       allow read, write: if false;

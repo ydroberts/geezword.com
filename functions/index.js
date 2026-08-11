@@ -299,11 +299,13 @@ exports.syncMemberOnSignup = onDocumentCreated(
     const FieldValue = admin.firestore.FieldValue;
     const serverNow = FieldValue.serverTimestamp();
 
-    // Latest-wins fields written on both create and update.
+    // Latest-wins fields written on both create and update. Interests are
+    // handled SEPARATELY below: the simplified (v3) form is NOT preference-
+    // bearing, so it must never overwrite an existing member's interests or
+    // mint topic changes.
     const latest = {
       email,
       firstName: (data.firstName || "").toString(),
-      interests: Array.isArray(data.interests) ? data.interests : [],
       source: (data.source || "").toString(),
       updatedAt: serverNow,
       lastSignupAt: data.createdAt || serverNow,
@@ -317,6 +319,13 @@ exports.syncMemberOnSignup = onDocumentCreated(
       latest.formVersion = data.formVersion;
     }
 
+    // formVersion 3 = SIMPLIFIED registration (name/email/language only). Its
+    // `interests` array is not a preference edit: seed a NEW member with
+    // ["general"], but for an EXISTING member preserve interests + topic states
+    // exactly (no overwrite, no opt-out, no re-opt-in).
+    const isSimplified = data.formVersion === 3;
+    const submittedInterests = Array.isArray(data.interests) ? data.interests : [];
+
     try {
       await admin.firestore().runTransaction(async (tx) => {
         const existing = await tx.get(ref);
@@ -324,6 +333,7 @@ exports.syncMemberOnSignup = onDocumentCreated(
           // New member — set defaults that must never be clobbered later.
           tx.set(ref, {
             ...latest,
+            interests: isSimplified ? ["general"] : submittedInterests,
             status: "subscribed",
             firstSeenAt: data.createdAt || serverNow,
             signupCount: 1,
@@ -332,17 +342,21 @@ exports.syncMemberOnSignup = onDocumentCreated(
           // Existing member — merge latest prefs but DO NOT touch `status`
           // (preserves any unsubscribe) or `firstSeenAt`.
           const patch = { ...latest, signupCount: FieldValue.increment(1) };
-          // One-time, SERVER-GENERATED topic re-opt-in: if THIS form submission
-          // re-selects an interest the member had previously DECLINED (mirror
-          // opt_out), record it so syncMemberToResend can re-opt them in. This
-          // is the trusted, form-driven affirmative action — the browser can't
-          // set this field (members is server-only). A background/profile/
-          // language update never runs this flow, so it can't reverse a decline.
-          const existingTopics = (existing.data() || {}).resendTopics || {};
-          const submitted = (Array.isArray(data.interests) ? data.interests : [])
-            .filter((s) => TOPIC_IDS[s]);
-          const reopt = submitted.filter((s) => existingTopics[s] === "opt_out");
-          if (reopt.length) patch.topicReoptIn = reopt;
+          if (!isSimplified) {
+            // Preference-bearing form (v2 / future Manage Interests): interests
+            // are authoritative -> overwrite, and mint a one-time re-opt-in for
+            // any re-selected previously-DECLINED topic (opt_out). The browser
+            // can't set this (members is server-only); background/language
+            // updates never run this path, so a decline can't be reversed.
+            patch.interests = submittedInterests;
+            const existingTopics = (existing.data() || {}).resendTopics || {};
+            const reopt = submittedInterests
+              .filter((s) => TOPIC_IDS[s])
+              .filter((s) => existingTopics[s] === "opt_out");
+            if (reopt.length) patch.topicReoptIn = reopt;
+          }
+          // Simplified (v3): interests + topic states preserved exactly — no
+          // interests write, no reopt.
           tx.set(ref, patch, { merge: true });
         }
       });

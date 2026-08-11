@@ -495,62 +495,6 @@
             <p class="field-error" id="language-error" role="alert" hidden>Please choose a preferred email language.</p>
           </fieldset>
 
-          <fieldset class="form-interests" id="interests-fieldset" aria-describedby="interests-error">
-            <legend class="form-label">Which Geezword resources interest you? <span class="field-req">(select all that apply)</span></legend>
-            <div class="interests-grid topics-grid">
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="tigrinya">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Tigrinya Learning</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="amharic">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Amharic Learning</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="geez-kidase">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Geez and Kidase Resources</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="childrens-learning">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Children&rsquo;s Learning</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="books-courses">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Geezword Books</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="games">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Educational Games</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="keyboards-typing">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">Keyboards and Typing</span>
-              </label>
-
-              <label class="topic-chip">
-                <input type="checkbox" name="interests" value="general">
-                <span class="topic-box" aria-hidden="true"></span>
-                <span class="topic-name">General Geezword News and Announcements</span>
-              </label>
-
-            </div>
-            <p class="field-error" id="interests-error" role="alert" hidden>Please select at least one interest.</p>
-          </fieldset>
-
           <button type="submit" class="btn btn-primary btn-xl join-button" id="join-free-button">
             Join Free &#8594;
           </button>
@@ -565,7 +509,7 @@
         <div class="community-success" id="community-success" role="status" aria-live="polite" hidden>
           <div class="success-mark" aria-hidden="true">&#10003;</div>
           <h3>Welcome, <span id="success-name">friend</span>!</h3>
-          <p>You&rsquo;re on the list. We&rsquo;ll be in touch with new books, apps, and offers across the Geezword ecosystem.</p>
+          <p>You&rsquo;re on the list. We&rsquo;ll keep you informed about new learning resources, books, apps, and important Geezword announcements.</p>
           <p class="success-detail" id="success-detail"></p>
         </div>
 
@@ -651,7 +595,6 @@
     const LANG_LABELS = { ti: "Tigrinya", am: "Amharic", en: "English" };
 
     const langError      = document.getElementById("language-error");
-    const interestsError = document.getElementById("interests-error");
     const detailOut      = document.getElementById("success-detail");
 
     if (form && success) {
@@ -676,31 +619,23 @@
         }
         if (langError) langError.hidden = true;
 
-        // Interests — required, at least one selection.
-        const interests = Array.from(
-          form.querySelectorAll('input[name="interests"]:checked')
-        ).map(b => b.value);
-        if (interests.length === 0) {
-          if (interestsError) interestsError.hidden = false;
-          const firstInterest = form.querySelector('input[name="interests"]');
-          if (firstInterest) firstInterest.focus();
-          return;
-        }
-        if (interestsError) interestsError.hidden = true;
-
         const originalLabel = submitEl ? submitEl.innerHTML : "";
         if (submitEl) {
           submitEl.disabled = true;
           submitEl.innerHTML = "Joining…";
         }
 
+        // Simplified registration (v3): name + email + language only. Interests
+        // are seeded to ["general"] for NEW members; the server preserves an
+        // existing member's interests (see syncMemberOnSignup) — this array is
+        // NOT treated as a preference edit for existing members.
         const payload = {
           firstName,
           email,
           preferredEmailLanguage,
-          interests,
+          interests: ["general"],
           source: "start-page",
-          formVersion: 2,
+          formVersion: 3,
         };
 
         let savedRemote = false;

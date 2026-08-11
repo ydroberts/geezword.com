@@ -253,6 +253,9 @@
       }
       $("who").textContent = "Signed in as " + (user.displayName || user.email || "");
       $("signout").classList.remove("hidden");
+      // Force a fresh ID token so newly-granted custom claims (e.g. admin:true)
+      // are picked up without requiring a manual sign-out/in.
+      try { await user.getIdToken(true); } catch (e) {}
       cursors = [null]; pageIdx = 0;
       await load();
     });

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeezWord Daily Challenge</title>
+  <meta name="description" content="Test your Tigrinya letter memory with today's Memory Match challenge. A new challenge every day.">
+  <!-- Social / Open Graph (for Facebook, messaging, and link previews) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GeezWord Daily Challenge">
+  <meta property="og:description" content="Test your Tigrinya letter memory with today's Memory Match challenge. A new challenge every day.">
+  <meta property="og:url" content="https://www.geezword.com/challenge">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="https://www.geezword.com/challenge">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..800&family=JetBrains+Mono:wght@400..700&family=Newsreader:opsz,wght@6..72,400..700&family=Noto+Sans+Ethiopic:wght@400..700&family=Noto+Serif+Ethiopic:wght@400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Scoped landing-page hero — reuses design tokens from styles.css */
+    .challenge-hero {
+      min-height: 62vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: clamp(2.5rem, 8vw, 6rem) 1.25rem;
+    }
+    .challenge-eyebrow {
+      font-family: var(--gz-font-body, "Newsreader", serif);
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gz-saffron-deep, #A87918);
+      margin: 0 0 var(--gz-space-4, 1rem);
+    }
+    .challenge-hero h1 {
+      font-family: var(--gz-font-display, "Fraunces", serif);
+      font-size: clamp(2.4rem, 6.5vw, 4rem);
+      line-height: 1.04;
+      color: var(--gz-indigo, #1F2A5C);
+      margin: 0 0 var(--gz-space-6, 1.5rem);
+      letter-spacing: -0.5px;
+    }
+    .challenge-hero .lede {
+      font-family: var(--gz-font-body, "Newsreader", serif);
+      font-size: clamp(1.15rem, 2.6vw, 1.45rem);
+      color: var(--text-mid, #3D332E);
+      line-height: 1.6;
+      margin: 0 0 var(--gz-space-2, 0.5rem);
+      max-width: 560px;
+    }
+    .challenge-hero .cue {
+      font-size: 1.05rem;
+      color: var(--gz-saffron-deep, #A87918);
+      font-weight: 600;
+      margin: 0 0 var(--gz-space-8, 2rem);
+    }
+    /* .btn defaults to --gz-text-sm; this page's single CTA needs to read big. */
+    .challenge-cta {
+      font-size: clamp(1.05rem, 2.4vw, 1.25rem);
+      padding: var(--gz-space-4, 1rem) var(--gz-space-8, 2rem);
+      text-decoration: none;
+    }
+    .challenge-cta:hover { transform: translateY(-2px); }
+    @media (prefers-reduced-motion: reduce) {
+      .challenge-cta:hover { transform: none; }
+    }
+    @media (max-width: 480px) {
+      .challenge-cta { width: 100%; max-width: 340px; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation (standard site header) -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">Geez<span>Word</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#apps">Apps</a></li>
+        <li><a href="books.html">Books</a></li>
+        <li><a href="downloads.html">Downloads</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="start.html" class="nav-join">Community</a></li>
+      </ul>
+      <div class="nav-search">
+        <span class="nav-search-icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search apps..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- Landing hero: single CTA to the production Daily Challenge -->
+  <main>
+    <section class="challenge-hero">
+      <p class="challenge-eyebrow">Daily Challenge</p>
+      <h1>GeezWord Daily Challenge</h1>
+      <p class="lede">Test your Tigrinya letter memory with today's Memory Match challenge.</p>
+      <p class="cue">A new challenge every day.</p>
+      <a class="btn btn-primary challenge-cta" href="https://games.geezword.com/challenge">
+        Play Today's Challenge &#8594;
+      </a>
+    </section>
+  </main>
+
+  <!-- Footer (standard site footer) -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h3>GeezWord</h3>
+        <p>Bridging diaspora communities with their homeland through language and culture. Learn Geez, Amharic, and Tigrinya with interactive tools built for the modern world.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="index.html#apps">Apps</a></li>
+          <li><a href="books.html">Books</a></li>
+          <li><a href="downloads.html">Downloads</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="start.html">Community</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Apps</h4>
+        <ul>
+          <li><a href="https://quest.geezword.com">Geez Assessment</a></li>
+          <li><a href="https://marbles.geezword.com">Marble Games</a></li>
+          <li><a href="https://arcade.geezword.com">Arcade</a></li>
+          <li><a href="https://kidase.geezword.com">Kidase Tutor</a></li>
+          <li><a href="https://lissan.geezword.com">Geez Lissan</a></li>
+          <li><a href="https://tigrinya-for-beginners.geezword.com">Tigrinya for Beginners</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 GeezWord. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

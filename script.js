@@ -28,9 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // === Search ===
   const apps = [
-    { name: 'Geez Fidel Marble Games', desc: 'Learn the Geez alphabet through a marble matching game', url: 'https://marbles.geezword.com', tags: 'game alphabet play' },
     { name: 'Sirate Kidase Tutor', desc: 'Interactive tutor for Orthodox Tewahedo Kidase liturgy', url: 'https://kidase.geezword.com', tags: 'learning culture liturgy' },
-    { name: 'Geez Fidel Arcade', desc: 'Fifteen arcade and puzzle games for learning the Geez alphabet', url: 'https://arcade.geezword.com', tags: 'game arcade play alphabet live' },
+    { name: 'GeezWord Games', desc: 'Fifteen arcade, puzzle and marble games for learning the Geez alphabet', url: 'https://games.geezword.com', tags: 'game games arcade marble puzzle play alphabet live' },
     { name: 'Daily Fidel Challenge', desc: 'A new Tigrinya fidel puzzle every day, free and without sign-up', url: '/challenge', tags: 'game daily challenge tigrinya alphabet play live' },
     { name: 'Geez Cycling', desc: 'Cycling game with Geez character challenges', url: 'apps.html', tags: 'game play cycling' },
     { name: 'Geez Car Racing', desc: 'Racing game while learning Geez consonants', url: 'https://racing.geezword.com', tags: 'game racing play live' },

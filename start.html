@@ -728,6 +728,55 @@
       applyPathInterests(); // covers cards opened in a new tab
     }
 
+    // ---- Campaign tags (utm_source / utm_medium / utm_campaign) ----
+    // Read from the /start URL. Kept for this tab so a visitor who lands on
+    // /start?utm_…, wanders to another path and comes back is still
+    // attributed; a newer tagged link replaces the old tags. Values are
+    // normalised to the shape firestore.rules accepts: lowercase a–z, 0–9,
+    // ".", "_" and "-", starting with a letter or digit, max 50 characters.
+    const CAMPAIGN_KEY = "geezword-start-campaign";
+    const CAMPAIGN_PARAMS = {
+      utm_source:   "utmSource",
+      utm_medium:   "utmMedium",
+      utm_campaign: "utmCampaign",
+    };
+
+    function cleanTag(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9._-]/g, "")
+        .replace(/^[._-]+/, "")
+        .slice(0, 50);
+    }
+
+    function readCampaign() {
+      const fromUrl = {};
+      const params = new URLSearchParams(window.location.search);
+      Object.entries(CAMPAIGN_PARAMS).forEach(([param, field]) => {
+        const v = cleanTag(params.get(param));
+        if (v) fromUrl[field] = v;
+      });
+      try {
+        if (Object.keys(fromUrl).length) {
+          sessionStorage.setItem(CAMPAIGN_KEY, JSON.stringify(fromUrl));
+          return fromUrl;
+        }
+        const stored = JSON.parse(sessionStorage.getItem(CAMPAIGN_KEY) || "{}");
+        const safe = {};
+        Object.values(CAMPAIGN_PARAMS).forEach((field) => {
+          const v = cleanTag(stored && stored[field]);
+          if (v) safe[field] = v;
+        });
+        return safe;
+      } catch (err) {
+        return fromUrl; // storage blocked — still use the current URL
+      }
+    }
+
+    const campaign = readCampaign();
+
     document.addEventListener("click", rememberPath);
     document.addEventListener("auxclick", rememberPath); // middle-click
     interestBoxes.forEach((box) =>
@@ -780,6 +829,7 @@
           interests: hasChosenInterests ? chosen : ["general"],
           source: "start-page",
           formVersion: hasChosenInterests ? 4 : 3,
+          ...campaign, // utmSource / utmMedium / utmCampaign, only when present
         };
 
         let savedRemote = false;

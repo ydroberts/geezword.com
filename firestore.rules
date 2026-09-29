@@ -21,9 +21,12 @@ service cloud.firestore {
         // formVersion. Both are OPTIONAL in the allow-list so that any older
         // client/form (v1, which omits them) can still submit successfully;
         // when preferredEmailLanguage IS present it must be one of ti/am/en.
+        // utmSource/utmMedium/utmCampaign (added 2026-09) are optional campaign
+        // tags read from the /start URL.
         request.resource.data.keys().hasOnly(
           ['firstName', 'email', 'preferredEmailLanguage', 'interests',
-           'source', 'formVersion', 'createdAt']
+           'source', 'formVersion', 'createdAt',
+           'utmSource', 'utmMedium', 'utmCampaign']
         )
 
         // firstName: required string, 1–80 chars
@@ -47,10 +50,15 @@ service cloud.firestore {
           )
         )
 
-        // interests: required list, 1–10 entries (v2 UI requires ≥1)
+        // interests: required list of 1–8 entries, each one of the 8 slugs the
+        // Cloud Functions map to Resend topics (INTEREST_LABELS / TOPIC_IDS in
+        // functions/index.js). Keep the two lists in sync.
         && request.resource.data.interests is list
         && request.resource.data.interests.size() >= 1
-        && request.resource.data.interests.size() <= 10
+        && request.resource.data.interests.size() <= 8
+        && request.resource.data.interests.hasOnly(
+             ['tigrinya', 'amharic', 'geez-kidase', 'childrens-learning',
+              'books-courses', 'games', 'keyboards-typing', 'general'])
 
         // source: string identifying the entry point (e.g. "start-page")
         && request.resource.data.source is string
@@ -61,6 +69,19 @@ service cloud.firestore {
           !('formVersion' in request.resource.data)
           || request.resource.data.formVersion is int
         )
+
+        // Campaign tags: each OPTIONAL; when present, 1–50 characters of
+        // lowercase a–z, 0–9, ".", "_" or "-", starting with a letter or digit
+        // (the /start page normalises to this shape before sending).
+        && (!('utmSource' in request.resource.data)
+            || (request.resource.data.utmSource is string
+                && request.resource.data.utmSource.matches('^[a-z0-9][a-z0-9._-]{0,49}$')))
+        && (!('utmMedium' in request.resource.data)
+            || (request.resource.data.utmMedium is string
+                && request.resource.data.utmMedium.matches('^[a-z0-9][a-z0-9._-]{0,49}$')))
+        && (!('utmCampaign' in request.resource.data)
+            || (request.resource.data.utmCampaign is string
+                && request.resource.data.utmCampaign.matches('^[a-z0-9][a-z0-9._-]{0,49}$')))
 
         // createdAt MUST be a server timestamp (prevents client clock spoofing)
         && request.resource.data.createdAt == request.time;

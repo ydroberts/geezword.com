@@ -495,6 +495,65 @@
             <p class="field-error" id="language-error" role="alert" hidden>Please choose a preferred email language.</p>
           </fieldset>
 
+          <!-- Interests — values are the server-side slugs in functions/index.js
+               (INTEREST_LABELS / TOPIC_IDS). Do not add a value here without a
+               matching Resend topic there. -->
+          <fieldset class="form-interests" id="interests-fieldset" aria-describedby="interests-hint">
+            <legend class="form-label">What would you like to hear about? <span class="field-req">(choose any)</span></legend>
+            <div class="topics-grid">
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="tigrinya">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Learning Tigrinya <span class="lang-native">&#4725;&#4877;&#4653;&#4763;</span></span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="amharic">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Learning Amharic <span class="lang-native">&#4768;&#4635;&#4653;&#4763;</span></span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="childrens-learning">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Learning for children</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="games">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Alphabet games</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="books-courses">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Books and courses</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="keyboards-typing">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Typing and keyboards</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="geez-kidase">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">Geez and Kidase</span>
+              </label>
+
+              <label class="topic-chip">
+                <input type="checkbox" name="interests" value="general">
+                <span class="topic-box" aria-hidden="true"></span>
+                <span class="topic-name">General news and announcements</span>
+              </label>
+
+            </div>
+            <p class="field-hint" id="interests-hint" hidden></p>
+          </fieldset>
+
           <button type="submit" class="btn btn-primary btn-xl join-button" id="join-free-button">
             Join Free &#8594;
           </button>
@@ -504,6 +563,8 @@
             <li><span class="reassure-check" aria-hidden="true">&#10003;</span> No spam</li>
             <li><span class="reassure-check" aria-hidden="true">&#10003;</span> Unsubscribe anytime</li>
           </ul>
+
+          <p class="form-fine-print">How we use your details: <a href="privacy.html">Privacy policy</a></p>
         </form>
 
         <div class="community-success" id="community-success" role="status" aria-live="polite" hidden>
@@ -596,6 +657,86 @@
 
     const langError      = document.getElementById("language-error");
     const detailOut      = document.getElementById("success-detail");
+    const interestsHint  = document.getElementById("interests-hint");
+
+    // ---- Interest pre-selection from the path the visitor chose ----
+    // Path cards (Five Paths + Help Me Choose) → interest slug. Only paths
+    // whose topic is unambiguous are mapped: Learn and "adult learning" cover
+    // both Tigrinya and Amharic, so they pre-select nothing.
+    const PATH_INTERESTS = {
+      "play-button":           "games",
+      "read-button":           "books-courses",
+      "type-button":           "keyboards-typing",
+      "kidase-card-button":    "geez-kidase",
+      "child-learning-button": "childrens-learning",
+      "books-button":          "books-courses",
+      "typing-button":         "keyboards-typing",
+      "kidase-button":         "geez-kidase",
+    };
+    // Most path cards leave the page, so the choice is remembered for this
+    // tab only and applied when the visitor comes back to the form.
+    const PATHS_KEY = "geezword-start-paths";
+    const interestBoxes = form
+      ? Array.from(form.querySelectorAll('input[name="interests"]'))
+      : [];
+    let interestsTouched = false;
+
+    function readPaths() {
+      try {
+        const v = JSON.parse(sessionStorage.getItem(PATHS_KEY) || "[]");
+        return Array.isArray(v) ? v.filter((s) => typeof s === "string") : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function applyPathInterests() {
+      // Never override a choice the visitor has made in the form.
+      if (interestsTouched || !interestBoxes.length) return;
+      const slugs = readPaths();
+      const ticked = [];
+      interestBoxes.forEach((box) => {
+        if (slugs.includes(box.value)) {
+          box.checked = true;
+          ticked.push(box.closest("label").querySelector(".topic-name").textContent.trim());
+        }
+      });
+      if (interestsHint && ticked.length) {
+        const quoted = ticked.map((t) => "“" + t + "”");
+        const list = quoted.length > 1
+          ? quoted.slice(0, -1).join(", ") + " and " + quoted[quoted.length - 1]
+          : quoted[0];
+        interestsHint.textContent =
+          "We ticked " + list + " from the path you chose. Change anything you like.";
+        interestsHint.hidden = false;
+      }
+    }
+
+    function rememberPath(e) {
+      const card = e.target.closest && e.target.closest("a[id]");
+      const slug = card && PATH_INTERESTS[card.id];
+      if (!slug) return;
+      try {
+        const slugs = readPaths();
+        if (!slugs.includes(slug)) {
+          slugs.push(slug);
+          sessionStorage.setItem(PATHS_KEY, JSON.stringify(slugs));
+        }
+      } catch (err) {
+        /* storage blocked — pre-selection is a convenience only */
+      }
+      applyPathInterests(); // covers cards opened in a new tab
+    }
+
+    document.addEventListener("click", rememberPath);
+    document.addEventListener("auxclick", rememberPath); // middle-click
+    interestBoxes.forEach((box) =>
+      box.addEventListener("change", () => { interestsTouched = true; })
+    );
+    applyPathInterests();
+    // Back-button returns can restore the page from cache without re-running
+    // this script; re-apply so a path chosen before leaving is reflected.
+    window.addEventListener("pageshow", applyPathInterests);
 
     if (form && success) {
       form.addEventListener("submit", async (e) => {
@@ -625,17 +766,20 @@
           submitEl.innerHTML = "Joining…";
         }
 
-        // Simplified registration (v3): name + email + language only. Interests
-        // are seeded to ["general"] for NEW members; the server preserves an
-        // existing member's interests (see syncMemberOnSignup) — this array is
-        // NOT treated as a preference edit for existing members.
+        // Interests. syncMemberOnSignup treats formVersion 3 as NOT preference-
+        // bearing (new member seeded ["general"], existing member's interests
+        // kept), and any other version as authoritative (interests replace the
+        // member's). So send formVersion 4 with exactly what the visitor ticked;
+        // if nothing is ticked, keep the v3 ["general"] fallback exactly.
+        const chosen = interestBoxes.filter((b) => b.checked).map((b) => b.value);
+        const hasChosenInterests = chosen.length > 0;
         const payload = {
           firstName,
           email,
           preferredEmailLanguage,
-          interests: ["general"],
+          interests: hasChosenInterests ? chosen : ["general"],
           source: "start-page",
-          formVersion: 3,
+          formVersion: hasChosenInterests ? 4 : 3,
         };
 
         let savedRemote = false;
@@ -670,6 +814,12 @@
           const langLabel = LANG_LABELS[preferredEmailLanguage] || "your chosen language";
           detailOut.textContent =
             "We’ll send your Geezword emails in " + langLabel + ".";
+          if (hasChosenInterests) {
+            const names = interestBoxes
+              .filter((b) => b.checked)
+              .map((b) => b.closest("label").querySelector(".topic-name").textContent.trim());
+            detailOut.textContent += " Your topics: " + names.join(", ") + ".";
+          }
         }
         form.hidden = true;
         success.hidden = false;

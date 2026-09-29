@@ -1161,6 +1161,14 @@ body.start-page {
   opacity: 0.8;
 }
 
+/* Helper note under a fieldset (e.g. "ticked from the path you chose") */
+.field-hint {
+  margin: 0;
+  font-family: var(--gz-font-body);
+  font-size: 0.95rem;
+  color: var(--gz-ink-soft);
+}
+
 /* Inline validation message */
 .field-error {
   margin: var(--gz-space-3) 0 0;
@@ -1352,6 +1360,12 @@ body.start-page {
   color: var(--gz-ink-soft);
   margin: 0;
   opacity: 0.75;
+}
+
+.form-fine-print a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Reassurance row — three checkmark benefits below the Join Free button */

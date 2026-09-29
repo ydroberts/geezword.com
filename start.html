@@ -618,6 +618,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp }
       from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+    import { readCampaign, readPathInterests, rememberPathInterest } from "/journey.js";
 
     const firebaseConfig = {
       apiKey:            "AIzaSyAQ0ZXnenNaDN_YhvHyU3bX8P6tlH5L2ps",
@@ -680,26 +681,17 @@
       "kidase-button":         "geez-kidase",
     };
     // Most path cards leave the page, so the choice is remembered for this
-    // tab only and applied when the visitor comes back to the form.
-    const PATHS_KEY = "geezword-start-paths";
+    // tab only (journey.js) and applied when the visitor comes back to the
+    // form. /play records "games" the same way.
     const interestBoxes = form
       ? Array.from(form.querySelectorAll('input[name="interests"]'))
       : [];
     let interestsTouched = false;
 
-    function readPaths() {
-      try {
-        const v = JSON.parse(sessionStorage.getItem(PATHS_KEY) || "[]");
-        return Array.isArray(v) ? v.filter((s) => typeof s === "string") : [];
-      } catch (err) {
-        return [];
-      }
-    }
-
     function applyPathInterests() {
       // Never override a choice the visitor has made in the form.
       if (interestsTouched || !interestBoxes.length) return;
-      const slugs = readPaths();
+      const slugs = readPathInterests();
       const ticked = [];
       interestBoxes.forEach((box) => {
         if (slugs.includes(box.value)) {
@@ -722,65 +714,13 @@
       const card = e.target.closest && e.target.closest("a[id]");
       const slug = card && PATH_INTERESTS[card.id];
       if (!slug) return;
-      try {
-        const slugs = readPaths();
-        if (!slugs.includes(slug)) {
-          slugs.push(slug);
-          sessionStorage.setItem(PATHS_KEY, JSON.stringify(slugs));
-        }
-      } catch (err) {
-        /* storage blocked — pre-selection is a convenience only */
-      }
+      rememberPathInterest(slug);
       applyPathInterests(); // covers cards opened in a new tab
     }
 
     // ---- Campaign tags (utm_source / utm_medium / utm_campaign) ----
-    // Read from the /start URL. Kept for this tab so a visitor who lands on
-    // /start?utm_…, wanders to another path and comes back is still
-    // attributed; a newer tagged link replaces the old tags. Values are
-    // normalised to the shape firestore.rules accepts: lowercase a–z, 0–9,
-    // ".", "_" and "-", starting with a letter or digit, max 50 characters.
-    const CAMPAIGN_KEY = "geezword-start-campaign";
-    const CAMPAIGN_PARAMS = {
-      utm_source:   "utmSource",
-      utm_medium:   "utmMedium",
-      utm_campaign: "utmCampaign",
-    };
-
-    function cleanTag(value) {
-      return String(value || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9._-]/g, "")
-        .replace(/^[._-]+/, "")
-        .slice(0, 50);
-    }
-
-    function readCampaign() {
-      const fromUrl = {};
-      const params = new URLSearchParams(window.location.search);
-      Object.entries(CAMPAIGN_PARAMS).forEach(([param, field]) => {
-        const v = cleanTag(params.get(param));
-        if (v) fromUrl[field] = v;
-      });
-      try {
-        if (Object.keys(fromUrl).length) {
-          sessionStorage.setItem(CAMPAIGN_KEY, JSON.stringify(fromUrl));
-          return fromUrl;
-        }
-        const stored = JSON.parse(sessionStorage.getItem(CAMPAIGN_KEY) || "{}");
-        const safe = {};
-        Object.values(CAMPAIGN_PARAMS).forEach((field) => {
-          const v = cleanTag(stored && stored[field]);
-          if (v) safe[field] = v;
-        });
-        return safe;
-      } catch (err) {
-        return fromUrl; // storage blocked — still use the current URL
-      }
-    }
-
+    // From this URL, or remembered for the tab from an earlier tagged landing
+    // on /start or /play (journey.js normalises them to the rules' shape).
     const campaign = readCampaign();
 
     document.addEventListener("click", rememberPath);

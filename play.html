@@ -10,9 +10,14 @@
   <meta property="og:description" content="Learn the Tigrinya Fidel through games.">
   <meta property="og:url" content="https://www.geezword.com/play">
   <meta property="og:site_name" content="GeezWord">
-  <meta property="og:image" content="https://www.geezword.com/images/marble.png">
-  <meta property="og:image:alt" content="A Geezword marble game: rows of coloured marbles, each marked with a Geez letter.">
-  <meta name="twitter:card" content="summary">
+  <!-- Pilot: the Fidel Sort campaign image is the preview for every /play link
+       (a static page cannot vary its preview by ?game=). -->
+  <meta property="og:image" content="https://www.geezword.com/images/play-og-fidel-sort.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Fidel Sort: marbles marked with Geez letters, sorted into tubes by vowel order.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://www.geezword.com/images/play-og-fidel-sort.png">
   <link rel="canonical" href="https://www.geezword.com/play">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -138,14 +143,14 @@
     <section class="play-hero">
       <div>
         <p class="play-eyebrow">Geezword Games</p>
-        <h1>Play Geezword Games Free</h1>
-        <p class="lede">Learn the Tigrinya Fidel through games.</p>
+        <h1 id="play-title">Play Geezword Games Free</h1>
+        <p class="lede" id="play-lede">Learn the Tigrinya Fidel through games.</p>
         <!-- href works without JavaScript; the script below adds any campaign tags. -->
         <a class="btn btn-primary play-cta" id="play-now" href="https://games.geezword.com/">PLAY NOW</a>
         <p class="play-note">Plays in your browser. No sign-up needed.</p>
       </div>
       <figure class="play-shot">
-        <img src="images/marble.png" width="528" height="760"
+        <img id="play-shot" src="images/marble.png" width="528" height="760"
              alt="A Geezword marble game: rows of coloured marbles, each marked with a Geez letter, and a shooter at the bottom.">
       </figure>
     </section>
@@ -196,13 +201,45 @@
     // from this page.
     import { readCampaign, campaignParams, rememberPathInterest } from "/journey.js";
 
-    const query = campaignParams(readCampaign()).toString();
+    // Featured games: /play?game=<key> shows that game and PLAY NOW opens it
+    // directly (games.geezword.com/?game=<gameId>). Add a game with one entry
+    // and a real screenshot. A missing or unknown key keeps the generic page.
+    const FEATURED = {
+      sort: {
+        gameId: "marble-sort",
+        title: "Play Fidel Sort Free",
+        lede: "Sort the marbles into tubes by vowel order, and learn the Tigrinya Fidel as you play.",
+        image: "images/play-fidel-sort.png",
+        width: 780,
+        height: 1174,
+        alt: "Fidel Sort: tubes of coloured marbles, each marked with a Geez letter, to be sorted by vowel order.",
+      },
+    };
+
+    const key = (new URLSearchParams(window.location.search).get("game") || "").trim().toLowerCase();
+    const featured = Object.prototype.hasOwnProperty.call(FEATURED, key) ? FEATURED[key] : null;
+
+    const campaign = campaignParams(readCampaign());
+    const query = campaign.toString();
     const playNow = document.getElementById("play-now");
     const join = document.getElementById("play-join");
 
-    if (query) {
-      playNow.href = "https://games.geezword.com/?" + query;
-      join.href = "/start?" + query + "#community";
+    const gamesParams = new URLSearchParams();
+    if (featured) gamesParams.set("game", featured.gameId);
+    campaign.forEach((value, name) => gamesParams.set(name, value));
+    const gamesQuery = gamesParams.toString();
+    if (gamesQuery) playNow.href = "https://games.geezword.com/?" + gamesQuery;
+    if (query) join.href = "/start?" + query + "#community";
+
+    if (featured) {
+      document.title = featured.title;
+      document.getElementById("play-title").textContent = featured.title;
+      document.getElementById("play-lede").textContent = featured.lede;
+      const shot = document.getElementById("play-shot");
+      shot.src = featured.image;
+      shot.width = featured.width;
+      shot.height = featured.height;
+      shot.alt = featured.alt;
     }
 
     const noteGames = () => rememberPathInterest("games");

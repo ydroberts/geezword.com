@@ -433,13 +433,9 @@
 
   <!-- ====================== JOIN THE COMMUNITY ====================== -->
   <!--
-    Community signup. Captures First Name, Email, and 5 interest tags.
-    Backend: placeholder — submissions are stored in localStorage under the
-    key in data-storage. To wire to a real endpoint:
-      1. Sign up for Formspree (formspree.io) or set up a Vercel API route.
-      2. Replace action="" with the endpoint URL.
-      3. Remove the inline <script> at the end of this section so the form
-         submits natively.
+    Community signup: first name, email, email language, optional interests.
+    Saved to Firestore (community-signups) by the module script below; the
+    success message appears only after Firestore confirms the write.
   -->
   <section class="rich-section section-community" id="community">
     <div class="container">
@@ -457,18 +453,17 @@
               id="community-form"
               action=""
               method="POST"
-              data-storage="geezword-community-signups"
               novalidate>
 
           <div class="form-row">
             <label class="form-field">
               <span class="form-label">First Name</span>
-              <input type="text" name="firstName" required autocomplete="given-name" placeholder="Your first name">
+              <input type="text" name="firstName" required maxlength="80" autocomplete="given-name" placeholder="Your first name">
             </label>
 
             <label class="form-field">
               <span class="form-label">Email Address</span>
-              <input type="email" name="email" required autocomplete="email" placeholder="you@example.com">
+              <input type="email" name="email" required maxlength="200" autocomplete="email" placeholder="you@example.com">
             </label>
           </div>
 
@@ -554,6 +549,9 @@
             <p class="field-hint" id="interests-hint" hidden></p>
           </fieldset>
 
+          <!-- Above the button so it is on screen when focus returns to it. -->
+          <p class="field-error submit-error" id="submit-error" role="alert" hidden></p>
+
           <button type="submit" class="btn btn-primary btn-xl join-button" id="join-free-button">
             Join Free &#8594;
           </button>
@@ -583,8 +581,8 @@
 
     The firebaseConfig object below is PUBLIC by design (it's just a project
     identifier). The actual security is enforced by firestore.rules at the
-    repo root. Until apiKey is replaced with a real value, the form falls
-    back to localStorage so local previews still work.
+    repo root. There is no local fallback: if Firebase is unreachable the
+    visitor is told registration failed and can try again.
 
     Setup checklist (one-time, ~10 min):
       1. console.firebase.google.com  →  Add project  →  name it
@@ -604,6 +602,18 @@
     community-signups collection. Each doc has firstName, email,
     interests[], source, createdAt.
   -->
+  <script>
+    // Guard for when the module script below never runs (e.g. the Firebase
+    // library is blocked or fails to download): without it the form would
+    // fall through to a native POST to this static page.
+    document.getElementById("community-form").addEventListener("submit", function (e) {
+      if (window.__geezwordFormReady) return;
+      e.preventDefault();
+      var msg = document.getElementById("submit-error");
+      msg.textContent = "Sorry, registration isn’t available right now. Please reload the page and try again.";
+      msg.hidden = false;
+    });
+  </script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
     import { getFirestore, collection, addDoc, serverTimestamp }
@@ -618,25 +628,21 @@
       appId:             "1:453691657979:web:c71e971c05da4e42e06a5e"
     };
 
-    const isConfigured =
-      firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("REPLACE_ME");
-
+    // If Firebase can't start, db stays null and every submit reports an
+    // error — there is no offline or local substitute for registration.
     let db = null;
-    if (isConfigured) {
-      try {
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-      } catch (err) {
-        console.warn("[geezword-community] Firebase init failed", err);
-      }
-    } else {
-      console.info("[geezword-community] Firebase not configured; using localStorage fallback.");
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+    } catch (err) {
+      console.warn("[geezword-community] Firebase init failed", err);
     }
 
-    const form     = document.getElementById("community-form");
-    const success  = document.getElementById("community-success");
-    const nameOut  = document.getElementById("success-name");
-    const submitEl = document.getElementById("join-free-button");
+    const form        = document.getElementById("community-form");
+    const success     = document.getElementById("community-success");
+    const nameOut     = document.getElementById("success-name");
+    const submitEl    = document.getElementById("join-free-button");
+    const submitError = document.getElementById("submit-error");
 
     // "Join Free" (top registration band) → scroll to the form AND move
     // keyboard focus into the first field so keyboard/screen-reader users
@@ -797,6 +803,13 @@
           form.reportValidity();
           return;
         }
+        // Same shape firestore.rules requires, so a typo gets a clear message
+        // here instead of a rejected write.
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+          showSubmitError("Please check your email address — it should look like name@example.com.");
+          form.elements["email"].focus();
+          return;
+        }
 
         // Preferred email language — required, single choice.
         const langEl = form.querySelector('input[name="preferredEmailLanguage"]:checked');
@@ -809,7 +822,6 @@
         }
         if (langError) langError.hidden = true;
 
-        const originalLabel = submitEl ? submitEl.innerHTML : "";
         if (submitEl) {
           submitEl.disabled = true;
           submitEl.innerHTML = "Joining…";
@@ -832,55 +844,103 @@
           ...campaign, // utmSource / utmMedium / utmCampaign, only when present
         };
 
-        let savedRemote = false;
-        if (db) {
-          try {
-            await addDoc(collection(db, "community-signups"), {
-              ...payload,
-              createdAt: serverTimestamp(),
-            });
-            savedRemote = true;
-          } catch (err) {
-            console.warn(
-              "[geezword-community] Firestore write failed, using localStorage fallback",
-              err
-            );
+        hideSubmitError();
+        try {
+          await saveRegistration(payload);
+        } catch (err) {
+          console.warn("[geezword-community] Registration not saved", err);
+          showSubmitError(
+            err && err.code === "permission-denied"
+              ? "Sorry, we couldn’t accept those details. Please check your name and email, then try again."
+              : "Sorry, we couldn’t complete your registration. Please check your connection and try again."
+          );
+          if (submitEl) {
+            submitEl.disabled = false;
+            submitEl.innerHTML = "Try again &#8594;";
+            submitEl.focus();
           }
+          return; // form stays visible with everything the visitor entered
         }
 
-        if (!savedRemote) {
-          try {
-            const key = form.dataset.storage || "geezword-community-signups";
-            const existing = JSON.parse(localStorage.getItem(key) || "[]");
-            existing.push({ ...payload, timestamp: new Date().toISOString() });
-            localStorage.setItem(key, JSON.stringify(existing));
-          } catch (err) {
-            /* private mode etc. — proceed anyway */
-          }
-        }
-
-        if (nameOut) nameOut.textContent = firstName;
-        if (detailOut) {
-          const langLabel = LANG_LABELS[preferredEmailLanguage] || "your chosen language";
-          detailOut.textContent =
-            "We’ll send your Geezword emails in " + langLabel + ".";
-          if (hasChosenInterests) {
-            const names = interestBoxes
-              .filter((b) => b.checked)
-              .map((b) => b.closest("label").querySelector(".topic-name").textContent.trim());
-            detailOut.textContent += " Your topics: " + names.join(", ") + ".";
-          }
-        }
-        form.hidden = true;
-        success.hidden = false;
-        success.scrollIntoView({ behavior: "smooth", block: "center" });
-
-        if (submitEl) {
-          submitEl.disabled = false;
-          submitEl.innerHTML = originalLabel;
-        }
+        showSuccess(payload);
       });
     }
+
+    // ---- Registration write: success only after Firestore confirms ----
+    // Offline, addDoc neither resolves nor rejects — the SDK keeps the write
+    // queued and retries it for as long as the page is open. So give up
+    // waiting after SAVE_TIMEOUT_MS and tell the visitor, but keep the queued
+    // write: a Try again with unchanged details waits on that same write
+    // rather than creating a duplicate, and if it lands late the success
+    // message is shown then.
+    const SAVE_TIMEOUT_MS = 15000;
+    let pending = null; // { key, promise } of a write not yet confirmed
+    let succeeded = false;
+
+    function saveRegistration(payload) {
+      if (!db) {
+        return Promise.reject(new Error("Firebase unavailable"));
+      }
+      const key = JSON.stringify(payload);
+      if (!pending || pending.key !== key) {
+        const promise = addDoc(collection(db, "community-signups"), {
+          ...payload,
+          createdAt: serverTimestamp(),
+        });
+        const entry = { key, promise };
+        pending = entry;
+        promise.then(
+          () => {
+            if (pending === entry) pending = null;
+            showSuccess(payload); // no-op if already shown; covers a late confirmation
+          },
+          () => { if (pending === entry) pending = null; }
+        );
+      }
+      let timer;
+      const timeout = new Promise((_, reject) => {
+        timer = window.setTimeout(() => reject(new Error("timeout")), SAVE_TIMEOUT_MS);
+      });
+      return Promise.race([pending.promise, timeout]).finally(() => window.clearTimeout(timer));
+    }
+
+    function showSubmitError(message) {
+      if (!submitError) return;
+      submitError.textContent = message;
+      submitError.hidden = false;
+    }
+
+    function hideSubmitError() {
+      if (submitError) submitError.hidden = true;
+    }
+
+    // Shown only once Firestore has confirmed the write.
+    function showSuccess(payload) {
+      if (succeeded || !form || !success) return;
+      succeeded = true;
+      hideSubmitError();
+      if (nameOut) nameOut.textContent = payload.firstName;
+      if (detailOut) {
+        const langLabel = LANG_LABELS[payload.preferredEmailLanguage] || "your chosen language";
+        detailOut.textContent =
+          "We’ll send your Geezword emails in " + langLabel + ".";
+        if (payload.formVersion === 4) { // visitor chose topics
+          const names = interestBoxes
+            .filter((b) => payload.interests.includes(b.value))
+            .map((b) => b.closest("label").querySelector(".topic-name").textContent.trim());
+          detailOut.textContent += " Your topics: " + names.join(", ") + ".";
+        }
+      }
+      form.hidden = true;
+      success.hidden = false;
+      success.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    // Older versions of this page kept failed registrations in localStorage
+    // under this key and reported success. Nothing reads it; clear it.
+    try { localStorage.removeItem("geezword-community-signups"); } catch (err) { /* blocked */ }
+
+    window.__geezwordFormReady = true;
   </script>
 
   <!-- Footer -->

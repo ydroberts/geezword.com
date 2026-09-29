@@ -2,7 +2,8 @@
 //
 // Remembers, in sessionStorage (this tab only, cleared when it closes):
 //   - campaign tags from the landing URL (utm_source / utm_medium / utm_campaign)
-//   - interests inferred from the paths the visitor clicked
+//   - interests inferred from the paths the visitor clicked, or passed as
+//     ?interest=<slug> (the games' Parents & Teachers link sends games)
 // so a registration later in the same tab keeps its attribution and topic
 // suggestions. Nothing here is sent anywhere; /start includes it in the
 // registration only when the visitor submits the form.
@@ -65,18 +66,48 @@ export function campaignParams(campaign) {
   return params;
 }
 
-export function readPathInterests() {
+// The 8 interest slugs firestore.rules accepts (and functions/index.js maps
+// to Resend topics). Only these may be suggested from a URL.
+const INTEREST_SLUGS = [
+  "tigrinya", "amharic", "geez-kidase", "childrens-learning",
+  "books-courses", "games", "keyboards-typing", "general",
+];
+
+function readStoredInterests() {
   try {
     const v = JSON.parse(sessionStorage.getItem(PATHS_KEY) || "[]");
-    return Array.isArray(v) ? v.filter((s) => typeof s === "string") : [];
+    return Array.isArray(v) ? v.filter((s) => INTEREST_SLUGS.includes(s)) : [];
   } catch (err) {
     return [];
   }
 }
 
+// ?interest=<slug> on the URL — e.g. the games' "Parents & Teachers" link
+// sends interest=games. Unknown values are ignored.
+function readUrlInterests() {
+  return new URLSearchParams(window.location.search)
+    .getAll("interest")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => INTEREST_SLUGS.includes(s));
+}
+
+// Suggestions for this tab: remembered path clicks plus any from the URL
+// (which are remembered too, so they survive leaving and returning).
+export function readPathInterests() {
+  const slugs = readStoredInterests();
+  readUrlInterests().forEach((slug) => {
+    if (!slugs.includes(slug)) {
+      slugs.push(slug);
+      rememberPathInterest(slug);
+    }
+  });
+  return slugs;
+}
+
 export function rememberPathInterest(slug) {
+  if (!INTEREST_SLUGS.includes(slug)) return;
   try {
-    const slugs = readPathInterests();
+    const slugs = readStoredInterests();
     if (!slugs.includes(slug)) {
       slugs.push(slug);
       sessionStorage.setItem(PATHS_KEY, JSON.stringify(slugs));

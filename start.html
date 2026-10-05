@@ -872,6 +872,8 @@
         }
       }
       form.hidden = true;
+      const kicker = document.querySelector(".form-kicker"); // "Join in less than 30 seconds."
+      if (kicker) kicker.hidden = true;
       success.hidden = false;
       success.scrollIntoView({ behavior: "smooth", block: "center" });
     }

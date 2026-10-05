@@ -471,12 +471,19 @@ img {
 /* === App Cards Grid === */
 .app-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
   gap: var(--gz-space-6);
 }
 
 /* Anchor offset so the sticky navbar doesn't overlap the section top. */
-#apps {
+#apps,
+#learn-paths,
+#play,
+#teach,
+#books,
+#kidase,
+#community,
+#history {
   scroll-margin-top: 80px;
 }
 
@@ -1060,7 +1067,7 @@ img {
 
 .values-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: var(--gz-space-6);
 }
 
@@ -1214,5 +1221,319 @@ img {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* === Homepage: learning-platform sections === */
+
+/* Hero: community link under the buttons (overrides .hero p) */
+.hero p.hero-community {
+  font-size: var(--gz-text-sm);
+  margin: var(--gz-space-6) 0 0;
+}
+
+.hero-community a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--gz-indigo);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Short lists of links inside path and teach cards — 44px rows (§9) */
+.link-list {
+  list-style: none;
+  margin: 0 0 var(--gz-space-4);
+  padding: 0;
+}
+
+.link-list li + li {
+  border-top: 1px solid var(--border);
+}
+
+.link-list a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--gz-space-2) 0;
+  font-size: var(--gz-text-sm);
+  font-weight: 600;
+  color: var(--gz-indigo);
+}
+
+.link-list a::after {
+  content: "\2192";
+  margin-left: auto;
+  padding-left: var(--gz-space-3);
+  color: var(--gz-saffron-deep);
+}
+
+.link-list a:hover {
+  color: var(--gz-saffron-deep);
+}
+
+/* Language entry: Tigrinya / Amharic / Geez & Kidase */
+.path-grid,
+.teach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: var(--gz-space-6);
+}
+
+.path-card,
+.teach-card {
+  background: var(--gz-parchment-deep);
+  border-radius: var(--radius);
+  padding: var(--gz-space-6);
+  display: flex;
+  flex-direction: column;
+}
+
+.path-native {
+  font-size: var(--gz-text-xl);
+  font-weight: 700;
+  color: var(--gz-saffron-deep);
+  line-height: 1.2;
+}
+
+.path-card h3,
+.teach-card h3 {
+  font-size: var(--gz-text-xl);
+  font-weight: 700;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-2);
+}
+
+.path-card p,
+.teach-card p {
+  font-size: var(--gz-text-sm);
+  color: var(--text-mid);
+  margin-bottom: var(--gz-space-4);
+}
+
+.path-card > .btn {
+  align-self: flex-start;
+  margin-bottom: var(--gz-space-4);
+}
+
+.teach-card > .btn {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* Play: prominent Play Free under the games */
+.play-cta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gz-space-4);
+  margin-top: var(--gz-space-8);
+}
+
+.play-cta-row .btn {
+  font-size: var(--gz-text-base);
+  min-height: 48px;
+  padding: var(--gz-space-3) var(--gz-space-8);
+}
+
+.play-cta-row p {
+  font-size: var(--gz-text-sm);
+  color: var(--text-mid);
+}
+
+/* Geez & Kidase: reuses .featured; fidel as the visual (no religious iconography on the hub, §8d) */
+.featured-content .hero-buttons {
+  justify-content: flex-start;
+}
+
+.kidase-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gz-space-2);
+  min-height: 240px;
+}
+
+.kidase-glyph {
+  font-size: 7rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gz-indigo);
+}
+
+.kidase-word {
+  font-size: var(--gz-text-xl);
+  color: var(--gz-saffron-deep);
+}
+
+/* Community band */
+.community-band {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.community-band h2 {
+  font-size: var(--gz-text-2xl);
+  font-weight: 700;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-3);
+}
+
+.community-band p {
+  font-size: var(--gz-text-base);
+  color: var(--text-mid);
+  margin-bottom: var(--gz-space-4);
+}
+
+.community-band p.community-for {
+  font-size: var(--gz-text-sm);
+  margin-bottom: var(--gz-space-6);
+}
+
+.community-band .btn {
+  font-size: var(--gz-text-base);
+  min-height: 48px;
+  padding: var(--gz-space-3) var(--gz-space-8);
+}
+
+.community-band p.community-note {
+  font-size: var(--gz-text-xs);
+  margin: var(--gz-space-4) 0 0;
+}
+
+/* History strip: dates as headings */
+#history .values-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+}
+
+#history .value-card {
+  background: var(--gz-parchment-deep);
+}
+
+#history .value-card h3 {
+  font-size: var(--gz-text-xl);
+  color: var(--gz-saffron-deep);
+}
+
+#history .value-card p.history-label {
+  font-weight: 700;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-1);
+}
+
+/* Phones: full-width tap-friendly CTAs, shorter hero visual */
+@media (max-width: 768px) {
+  .hero-buttons .btn,
+  .play-cta-row .btn,
+  .community-band .btn,
+  .path-card > .btn,
+  .teach-card > .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .featured-content .hero-buttons {
+    justify-content: center;
+  }
+
+  .play-cta-row {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .hero-visual {
+    min-height: 200px;
+  }
+
+  .hero-habi {
+    width: 140px;
+  }
+
+  .kidase-preview {
+    min-height: 180px;
+  }
+
+  .kidase-glyph {
+    font-size: 5rem;
+  }
+}
+
+/* Small phones (QR / social traffic): keep both hero CTAs above the fold */
+@media (max-width: 480px) {
+  .hero-home {
+    padding-top: var(--gz-space-8);
+  }
+
+  .hero-home h1 {
+    font-size: var(--gz-text-2xl);
+  }
+
+  .hero-home p.hero-community {
+    margin-top: var(--gz-space-3);
+  }
+}
+
+/* === Homepage section menu: active item (scroll-spy in script.js) ===
+   Scoped to .nav-sections so other pages' menus are unchanged. */
+#home {
+  scroll-margin-top: 64px;
+}
+
+.nav-sections a {
+  position: relative;
+}
+
+.nav-sections a.active:not(.nav-join) {
+  color: var(--gz-indigo);
+  font-weight: 700;
+}
+
+.nav-sections a.active:not(.nav-join)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--gz-saffron);
+}
+
+.nav-sections a.nav-join.active {
+  background: var(--gz-saffron-deep);
+  box-shadow: 0 0 0 2px var(--gz-indigo);
+}
+
+/* Six items + search: tighten spacing where the bar is narrowest */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .nav-sections {
+    gap: var(--gz-space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-sections a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .nav-sections a.active:not(.nav-join)::after {
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    left: -12px;
+    width: 4px;
+    height: 24px;
+    transform: translateY(-50%);
+  }
+
+  .nav-sections a.nav-join {
+    display: inline-flex;
   }
 }

@@ -17,14 +17,86 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Set active nav link
+  // Set active nav link — unless the page marks its own (aria-current="page"),
+  // e.g. /start, where Start and Community share the same href.
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-  document.querySelectorAll('.nav-links a').forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPage || (currentPage === '' && href === 'index.html')) {
-      link.classList.add('active');
-    }
-  });
+  if (!document.querySelector('.nav-links a[aria-current="page"]')) {
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+        link.classList.add('active');
+      }
+    });
+  }
+
+  // === Homepage section highlight (scroll-spy) ===
+  // The homepage menu links to sections (#home, #apps, …). The active item is
+  // the last section whose top has passed a line ~40% down the visible area,
+  // so it follows scrolling in both directions. A section can borrow another
+  // item with data-nav-section="id", or light none with data-nav-section="".
+  const sectionNav = document.querySelector('.nav-links.nav-sections');
+  if (sectionNav) {
+    const navItems = new Map();
+    sectionNav.querySelectorAll('a[href^="#"]').forEach(link => {
+      navItems.set(link.getAttribute('href').slice(1), link);
+    });
+    const sections = [...document.querySelectorAll('body > section[id]')];
+    const navbar = document.querySelector('.navbar');
+    let current;
+    let lockedUntil = 0;
+
+    const setActive = key => {
+      if (key === current) return;
+      current = key;
+      navItems.forEach((link, id) => {
+        const on = id === key;
+        link.classList.toggle('active', on);
+        if (on) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    const sectionInView = () => {
+      const navBottom = navbar ? navbar.getBoundingClientRect().bottom : 0;
+      const line = navBottom + (window.innerHeight - navBottom) * 0.4;
+      let key = 'home';
+      sections.forEach(section => {
+        if (section.getBoundingClientRect().top <= line) {
+          const borrowed = section.dataset.navSection;
+          key = borrowed !== undefined ? borrowed : section.id;
+        }
+      });
+      return navItems.has(key) ? key : null;
+    };
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      if (Date.now() < lockedUntil) return;
+      setActive(sectionInView());
+    };
+    const requestUpdate = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    };
+
+    // A clicked item lights at once and holds while the smooth scroll passes
+    // other sections; scrollend (or the timeout, where unsupported) releases it.
+    navItems.forEach((link, id) => {
+      link.addEventListener('click', () => {
+        setActive(id);
+        lockedUntil = Date.now() + 1200;
+      });
+    });
+    window.addEventListener('scrollend', () => { lockedUntil = 0; requestUpdate(); });
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    window.addEventListener('hashchange', requestUpdate);
+    window.addEventListener('load', requestUpdate); // after a #section deep link lands
+    update();
+  }
 
   // === Search ===
   const apps = [
@@ -98,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // === Scroll-reveal — fade sections and cards up as they enter the viewport ===
   const revealTargets = document.querySelectorAll(
-    '.section-header, .featured, .app-card, .book-card, .category h3, .coming-soon-card, .value-card'
+    '.section-header, .featured, .app-card, .book-card, .category h3, .coming-soon-card, .value-card, .path-card, .teach-card, .community-band'
   );
   if (revealTargets.length && 'IntersectionObserver' in window) {
     revealTargets.forEach(el => el.classList.add('reveal'));

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>GeezWord — Learn Geez, Amharic & Tigrinya</title>
-  <meta name="description" content="Interactive tools, games, and resources bridging diaspora communities with their homeland through Geez, Amharic, and Tigrinya language learning.">
+  <meta name="description" content="Modern tools and resources for learning and teaching Tigrinya, Amharic and Geez/Kidase — apps, games, books, and a free community for learners, parents and teachers.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..800&family=JetBrains+Mono:wght@400..700&family=Newsreader:opsz,wght@6..72,400..700&family=Noto+Sans+Ethiopic:wght@400..700&family=Noto+Serif+Ethiopic:wght@400..700&display=swap" rel="stylesheet">
@@ -18,13 +18,14 @@
   <nav class="navbar">
     <div class="nav-container">
       <a href="index.html" class="nav-logo">Geez<span>Word</span></a>
-      <ul class="nav-links">
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="#apps">Apps</a></li>
-        <li><a href="books.html">Books</a></li>
-        <li><a href="downloads.html">Downloads</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="start.html" class="nav-join">Community</a></li>
+      <!-- Homepage sections; script.js highlights the one in view (aria-current). -->
+      <ul class="nav-links nav-sections">
+        <li><a href="#home" class="active" aria-current="location">Home</a></li>
+        <li><a href="#apps">Learn &amp; Play</a></li>
+        <li><a href="#teach">Teach</a></li>
+        <li><a href="#books">Books</a></li>
+        <li><a href="#kidase">Kidase</a></li>
+        <li><a href="#community" class="nav-join">Community</a></li>
       </ul>
       <div class="nav-search">
         <span class="nav-search-icon">&#128269;</span>
@@ -36,18 +37,19 @@
   </nav>
 
   <!-- Hero -->
-  <section class="hero">
+  <section class="hero hero-home" id="home">
     <div class="hero-inner">
       <div class="hero-content">
         <h1>
           <span class="geez-script">&#4877;&#4821;&#4829; &#4808;&#4653;&#4853;</span>
           Learn Your Language, Keep Your Roots
         </h1>
-        <p>Interactive apps and games that make learning Geez, Amharic, and Tigrinya fun for the diaspora and beyond.</p>
+        <p>Modern tools and resources for learning and teaching Tigrinya, Amharic and Geez/Kidase.</p>
         <div class="hero-buttons">
-          <a href="#apps" class="btn btn-primary">Explore Apps &#8594;</a>
-          <a href="downloads.html" class="btn btn-secondary">Free Downloads</a>
+          <a href="#learn-paths" class="btn btn-primary">Start Learning &#8594;</a>
+          <a href="/play" class="btn btn-secondary">Play Free</a>
         </div>
+        <p class="hero-community">New here? <a href="/start#community">Join the Geezword Community, free &#8594;</a></p>
       </div>
       <div class="hero-visual" aria-hidden="true">
         <span class="hero-fidel hero-fidel-1">&#4608;</span>
@@ -60,48 +62,60 @@
     </div>
   </section>
 
-  <!-- Featured: Geez Lissan -->
-  <section class="section">
+  <!-- Language entry: three paths -->
+  <section class="section" id="learn-paths" data-nav-section="home">
     <div class="container">
-      <div class="featured">
-        <div class="featured-content">
-          <h2>Geez Lissan &mdash; Your Language Companion</h2>
-          <p>A language learning app designed specifically for Amharic, Tigrinya, English, and Arabic. Whether you're in the diaspora reconnecting with your mother tongue, or at home learning a new language &mdash; Geez Lissan is your guide.</p>
-          <div class="featured-languages">
-            <span class="lang-chip">&#127466;&#127481; Amharic</span>
-            <span class="lang-chip">&#127466;&#127479; Tigrinya</span>
-            <span class="lang-chip">&#127468;&#127463; English</span>
-            <span class="lang-chip">&#127480;&#127462; Arabic</span>
-          </div>
-          <a href="https://lissan.geezword.com" class="btn btn-primary">Try Geez Lissan &#8594;</a>
+      <div class="section-header">
+        <h2>What would you like to learn?</h2>
+        <p>Choose a language to see where to begin.</p>
+      </div>
+      <div class="path-grid">
+
+        <div class="path-card">
+          <span class="path-native geez-script" lang="ti">&#4725;&#4877;&#4653;&#4763;</span>
+          <h3>Tigrinya</h3>
+          <p>Start with the alphabet, then build to reading and everyday phrases.</p>
+          <a href="https://tigrinya-for-beginners.geezword.com" class="btn btn-primary">Tigrinya for Beginners &#8594;</a>
+          <ul class="link-list">
+            <li><a href="/challenge">Daily Fidel Challenge</a></li>
+            <li><a href="https://lissan.geezword.com">Geez Lissan</a></li>
+            <li><a href="books.html">Tigrinya books</a></li>
+          </ul>
         </div>
-        <div class="featured-preview">
-          <div class="phone-mockup">
-            <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 12px;">STEP 1 OF 3</p>
-            <p style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">What would you like to learn?</p>
-            <div style="background: var(--gz-parchment-deep); border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
-              <strong>&#4768;&#4635;&#4653;&#4763;</strong><br>
-              <span style="font-size: 0.85rem; color: var(--text-light);">Amharic &mdash; ~57M speakers</span>
-            </div>
-            <div style="background: var(--gz-parchment-deep); border-radius: 8px; padding: 12px; margin-bottom: 8px; text-align: left;">
-              <strong>&#4725;&#4877;&#4653;&#4763;</strong><br>
-              <span style="font-size: 0.85rem; color: var(--text-light);">Tigrinya &mdash; ~9M speakers</span>
-            </div>
-            <div style="background: var(--gz-parchment-deep); border-radius: 8px; padding: 12px; text-align: left;">
-              <strong>English</strong><br>
-              <span style="font-size: 0.85rem; color: var(--text-light);">For Amharic & Tigrinya speakers</span>
-            </div>
-          </div>
+
+        <div class="path-card">
+          <span class="path-native geez-script" lang="am">&#4768;&#4635;&#4653;&#4763;</span>
+          <h3>Amharic</h3>
+          <p>Learn Amharic with Geez Lissan, and practise the shared Geez alphabet with tracing and games.</p>
+          <a href="https://lissan.geezword.com" class="btn btn-primary">Geez Lissan &#8594;</a>
+          <ul class="link-list">
+            <li><a href="https://tracing.geezword.com">Geez Alphabet Tracing</a></li>
+            <li><a href="https://universe.geezword.com">Geez Universe</a></li>
+            <li><a href="https://games.geezword.com">Alphabet games</a></li>
+          </ul>
         </div>
+
+        <div class="path-card">
+          <span class="path-native geez-script" lang="gez">&#4877;&#4821;&#4829;</span>
+          <h3>Geez &amp; Kidase</h3>
+          <p>Learn the Kidase with guided lessons, and explore the Geez script behind it.</p>
+          <a href="https://kidase.geezword.com" class="btn btn-primary">Sirate Kidase Tutor &#8594;</a>
+          <ul class="link-list">
+            <li><a href="https://universe.geezword.com">Geez Universe</a></li>
+            <li><a href="https://quest.geezword.com">Geez Assessment</a></li>
+            <li><a href="#kidase">More about Geez &amp; Kidase</a></li>
+          </ul>
+        </div>
+
       </div>
     </div>
   </section>
 
-  <!-- Apps -->
+  <!-- Apps: Learn + Play -->
   <section class="section section-alt" id="apps">
     <div class="container">
       <div class="section-header">
-        <h2>Explore the Apps</h2>
+        <h2>Learn &amp; Play</h2>
         <p>Interactive tools for learning Geez, Amharic, and Tigrinya &mdash; organized by how you like to learn.</p>
       </div>
 
@@ -177,7 +191,7 @@
         </div>
       </div>
 
-      <div class="category">
+      <div class="category" id="play">
         <h3>&#127918; Play</h3>
         <div class="app-grid">
 
@@ -215,44 +229,85 @@
           </a>
 
         </div>
+        <div class="play-cta-row">
+          <a href="/play" class="btn btn-primary">Play Free &#8594;</a>
+          <p>Plays in your browser. No sign-up needed.</p>
+        </div>
       </div>
 
     </div>
   </section>
 
-  <!-- Books Teaser -->
-  <section class="section">
+  <!-- Teach Tigrinya & Amharic -->
+  <section class="section" id="teach">
+    <div class="container">
+      <div class="section-header">
+        <h2>Teach Tigrinya &amp; Amharic</h2>
+        <p>Resources for parents teaching their children at home and volunteer teachers leading language classes in churches and community centers.</p>
+      </div>
+      <div class="teach-grid">
+
+        <div class="teach-card">
+          <h3>Teach at Home</h3>
+          <p>Helping your children learn? Short, regular sessions with the same Geezword tools &mdash; trace letters, play alphabet games, and read together.</p>
+          <ul class="link-list">
+            <li><a href="books.html">Tigrinya books &mdash; reading and letter tracing</a></li>
+            <li><a href="https://tracing.geezword.com">Geez Alphabet Tracing</a></li>
+            <li><a href="/play">Alphabet games</a></li>
+            <li><a href="https://tigrinya-for-beginners.geezword.com">Tigrinya for Beginners app</a></li>
+            <li><a href="https://lissan.geezword.com">Geez Lissan</a></li>
+          </ul>
+          <a href="/start?interest=childrens-learning#community" class="btn btn-secondary">Get updates for parents &#8594;</a>
+        </div>
+
+        <div class="teach-card">
+          <h3>Teach a Language Class</h3>
+          <p>Leading a Tigrinya or Amharic class at a church or community center? The same resources work with a group.</p>
+          <ul class="link-list">
+            <li><a href="books.html">Tigrinya books for your class</a></li>
+            <li><a href="https://quest.geezword.com">Geez Assessment &mdash; see which fidel each learner knows</a></li>
+            <li><a href="https://universe.geezword.com">Geez Universe &mdash; explore the script together</a></li>
+            <li><a href="/challenge">Daily Fidel Challenge &mdash; one shared puzzle a day</a></li>
+            <li><a href="/play">Alphabet games</a></li>
+          </ul>
+          <a href="mailto:info@geezword.com" class="btn btn-secondary">Tell us about your class &#8594;</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Books -->
+  <section class="section section-alt" id="books">
     <div class="container">
       <div class="section-header">
         <h2>Books</h2>
-        <p>Published resources for learning Tigrinya &mdash; available in print</p>
+        <p>Tigrinya books for learning at home and teaching in language classes &mdash; available in print</p>
       </div>
       <div class="books-grid">
 
         <a href="books.html" class="book-card">
           <div class="book-cover">
-            <img src="images/tigrinya-for-beginners.jpg" alt="Tigrinya for Beginners book cover">
+            <img src="images/tigrinya-for-beginners.jpg" alt="Tigrinya for Beginners book cover" loading="lazy">
           </div>
           <div class="book-info">
             <h4>Tigrinya for Beginners</h4>
             <p>The first complete beginner's guide to Tigrinya.</p>
             <div class="book-price">
-              <span class="price-old">$33.00</span>
-              <span class="price-now">$29.70</span>
+              <span class="price-now">$35.00</span>
             </div>
           </div>
         </a>
 
         <a href="books.html" class="book-card">
           <div class="book-cover">
-            <img src="images/tigrinya-letter-tracing.jpg" alt="Tigrinya Letter Tracing book cover">
+            <img src="images/tigrinya-letter-tracing.jpg" alt="Tigrinya Letter Tracing book cover" loading="lazy">
           </div>
           <div class="book-info">
             <h4>Tigrinya Letter Tracing</h4>
             <p>The most comprehensive beginner-friendly Tigrinya letter tracing book.</p>
             <div class="book-price">
-              <span class="price-old">$35.00</span>
-              <span class="price-now">$25.00</span>
+              <span class="price-now">$30.00</span>
             </div>
           </div>
         </a>
@@ -260,6 +315,69 @@
       </div>
       <div style="text-align: center; margin-top: 32px;">
         <a href="books.html" class="btn btn-secondary">View All Books &#8594;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Geez & Kidase -->
+  <section class="section" id="kidase">
+    <div class="container">
+      <div class="featured">
+        <div class="featured-content">
+          <h2>Geez &amp; Kidase</h2>
+          <p>Sirate Kidase Tutor is an interactive tutor for learning the Orthodox Tewahedo Kidase, with guided lessons, prayers, fidel reading, and service tutorials.</p>
+          <div class="hero-buttons">
+            <a href="https://kidase.geezword.com" class="btn btn-primary">Open Kidase Tutor &#8594;</a>
+            <a href="https://universe.geezword.com" class="btn btn-secondary">Explore the Geez script</a>
+          </div>
+        </div>
+        <div class="featured-preview kidase-preview" aria-hidden="true">
+          <span class="kidase-glyph geez-script">&#4677;</span>
+          <span class="kidase-word geez-script">&#4677;&#4851;&#4660;</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Community -->
+  <section class="section section-alt" id="community">
+    <div class="container">
+      <div class="community-band">
+        <h2>Join the Geezword Community</h2>
+        <p>Stay connected for new learning resources, games, books, demonstrations and community events.</p>
+        <p class="community-for">For parents, learners, teachers, churches and community language programs.</p>
+        <a href="/start#community" class="btn btn-primary">Join Free &#8594;</a>
+        <p class="community-note">Free to join &middot; No spam &middot; Unsubscribe anytime</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="section" id="history" data-nav-section="">
+    <div class="container">
+      <div class="section-header">
+        <h2>Over Forty Years of Geez</h2>
+        <p>Geezword grows out of decades of work bringing the Geez script and its languages to the screen.</p>
+      </div>
+      <div class="values-grid">
+        <div class="value-card">
+          <h3>1981&ndash;1982</h3>
+          <p class="history-label">The Beginning</p>
+          <p>Development of Geezword began in 1981, leading to the first Geezword software in 1982.</p>
+        </div>
+        <div class="value-card">
+          <h3>2001</h3>
+          <p class="history-label">Unicode Geezword</p>
+          <p>Geezword with Unicode support was completed in 2001 and became widely used in Eritrea and throughout the diaspora.</p>
+        </div>
+        <div class="value-card">
+          <h3>Today</h3>
+          <p class="history-label">Learning &amp; Teaching</p>
+          <p>Books, apps and games for learning and teaching Tigrinya, Amharic and Geez/Kidase.</p>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="about.html" class="btn btn-secondary">About Geezword &#8594;</a>
       </div>
     </div>
   </section>
@@ -327,5 +445,12 @@
   </footer>
 
   <script src="script.js"></script>
+  <script type="module">
+    // Remember campaign tags (utm_*) from a tagged link to the homepage for
+    // this tab (journey.js), so a later /start registration keeps them.
+    // Nothing is sent anywhere from this page.
+    import { readCampaign } from "/journey.js";
+    readCampaign();
+  </script>
 </body>
 </html>

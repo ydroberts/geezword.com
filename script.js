@@ -26,6 +26,75 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // === Homepage section highlight (scroll-spy) ===
+  // The homepage menu links to sections (#home, #apps, …). The active item is
+  // the last section whose top has passed a line ~40% down the visible area,
+  // so it follows scrolling in both directions. A section can borrow another
+  // item with data-nav-section="id", or light none with data-nav-section="".
+  const sectionNav = document.querySelector('.nav-links.nav-sections');
+  if (sectionNav) {
+    const navItems = new Map();
+    sectionNav.querySelectorAll('a[href^="#"]').forEach(link => {
+      navItems.set(link.getAttribute('href').slice(1), link);
+    });
+    const sections = [...document.querySelectorAll('body > section[id]')];
+    const navbar = document.querySelector('.navbar');
+    let current;
+    let lockedUntil = 0;
+
+    const setActive = key => {
+      if (key === current) return;
+      current = key;
+      navItems.forEach((link, id) => {
+        const on = id === key;
+        link.classList.toggle('active', on);
+        if (on) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      });
+    };
+
+    const sectionInView = () => {
+      const navBottom = navbar ? navbar.getBoundingClientRect().bottom : 0;
+      const line = navBottom + (window.innerHeight - navBottom) * 0.4;
+      let key = 'home';
+      sections.forEach(section => {
+        if (section.getBoundingClientRect().top <= line) {
+          const borrowed = section.dataset.navSection;
+          key = borrowed !== undefined ? borrowed : section.id;
+        }
+      });
+      return navItems.has(key) ? key : null;
+    };
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      if (Date.now() < lockedUntil) return;
+      setActive(sectionInView());
+    };
+    const requestUpdate = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(update);
+      }
+    };
+
+    // A clicked item lights at once and holds while the smooth scroll passes
+    // other sections; scrollend (or the timeout, where unsupported) releases it.
+    navItems.forEach((link, id) => {
+      link.addEventListener('click', () => {
+        setActive(id);
+        lockedUntil = Date.now() + 1200;
+      });
+    });
+    window.addEventListener('scrollend', () => { lockedUntil = 0; requestUpdate(); });
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    window.addEventListener('hashchange', requestUpdate);
+    window.addEventListener('load', requestUpdate); // after a #section deep link lands
+    update();
+  }
+
   // === Search ===
   const apps = [
     { name: 'Sirate Kidase Tutor', desc: 'Interactive tutor for Orthodox Tewahedo Kidase liturgy', url: 'https://kidase.geezword.com', tags: 'learning culture liturgy' },

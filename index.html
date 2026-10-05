@@ -18,13 +18,14 @@
   <nav class="navbar">
     <div class="nav-container">
       <a href="index.html" class="nav-logo">Geez<span>Word</span></a>
-      <ul class="nav-links">
-        <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="#apps">Apps</a></li>
-        <li><a href="books.html">Books</a></li>
-        <li><a href="downloads.html">Downloads</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="start.html" class="nav-join">Community</a></li>
+      <!-- Homepage sections; script.js highlights the one in view (aria-current). -->
+      <ul class="nav-links nav-sections">
+        <li><a href="#home" class="active" aria-current="location">Home</a></li>
+        <li><a href="#apps">Learn &amp; Play</a></li>
+        <li><a href="#teach">Teach</a></li>
+        <li><a href="#books">Books</a></li>
+        <li><a href="#kidase">Kidase</a></li>
+        <li><a href="#community" class="nav-join">Community</a></li>
       </ul>
       <div class="nav-search">
         <span class="nav-search-icon">&#128269;</span>
@@ -36,7 +37,7 @@
   </nav>
 
   <!-- Hero -->
-  <section class="hero hero-home">
+  <section class="hero hero-home" id="home">
     <div class="hero-inner">
       <div class="hero-content">
         <h1>
@@ -62,7 +63,7 @@
   </section>
 
   <!-- Language entry: three paths -->
-  <section class="section" id="learn-paths">
+  <section class="section" id="learn-paths" data-nav-section="home">
     <div class="container">
       <div class="section-header">
         <h2>What would you like to learn?</h2>
@@ -352,7 +353,7 @@
   </section>
 
   <!-- History -->
-  <section class="section" id="history">
+  <section class="section" id="history" data-nav-section="">
     <div class="container">
       <div class="section-header">
         <h2>Over Forty Years of Geez</h2>

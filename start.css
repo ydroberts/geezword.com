@@ -975,6 +975,13 @@ body.start-page {
   gap: var(--gz-space-8);
 }
 
+/* The script shows and hides the form, success panel and messages with the
+   hidden attribute; a display rule like the one above would otherwise win
+   over the browser's [hidden] default and leave the form on screen. */
+.start-page [hidden] {
+  display: none !important;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

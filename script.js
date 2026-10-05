@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // === Scroll-reveal — fade sections and cards up as they enter the viewport ===
   const revealTargets = document.querySelectorAll(
-    '.section-header, .featured, .app-card, .book-card, .category h3, .coming-soon-card, .value-card'
+    '.section-header, .featured, .app-card, .book-card, .category h3, .coming-soon-card, .value-card, .path-card, .teach-card, .community-band'
   );
   if (revealTargets.length && 'IntersectionObserver' in window) {
     revealTargets.forEach(el => el.classList.add('reveal'));

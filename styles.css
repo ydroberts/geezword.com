@@ -1419,6 +1419,12 @@ img {
   color: var(--gz-saffron-deep);
 }
 
+#history .value-card p.history-label {
+  font-weight: 700;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-1);
+}
+
 /* Phones: full-width tap-friendly CTAs, shorter hero visual */
 @media (max-width: 768px) {
   .hero-buttons .btn,

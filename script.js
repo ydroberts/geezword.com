@@ -17,14 +17,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Set active nav link
+  // Set active nav link — unless the page marks its own (aria-current="page"),
+  // e.g. /start, where Start and Community share the same href.
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-  document.querySelectorAll('.nav-links a').forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPage || (currentPage === '' && href === 'index.html')) {
-      link.classList.add('active');
-    }
-  });
+  if (!document.querySelector('.nav-links a[aria-current="page"]')) {
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+        link.classList.add('active');
+      }
+    });
+  }
 
   // === Homepage section highlight (scroll-spy) ===
   // The homepage menu links to sections (#home, #apps, …). The active item is

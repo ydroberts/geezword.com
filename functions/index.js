@@ -261,7 +261,9 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
  *
  * Guarantees (per product requirements):
  *  - Email is trimmed + lowercased BEFORE hashing → one member per person.
- *  - LATEST preferred language + interests + firstName win on each signup.
+ *  - LATEST preferred language + firstName win on each signup; interests are
+ *    added to (never removed by) a later preference-bearing signup.
+ *  - campaigns[] keeps every utmCampaign the member registered through.
  *  - An `unsubscribed` member is NEVER silently re-subscribed: on update we
  *    do not write `status`, so a prior opt-out is preserved. (Phase 2 keeps
  *    this in two-way sync with Resend so opt-outs can't be emailed.)
@@ -296,7 +298,9 @@ exports.syncMemberOnSignup = onDocumentCreated(
 
     const memberId = memberIdFor(email);
     const ref = admin.firestore().collection("members").doc(memberId);
-    const FieldValue = admin.firestore.FieldValue;
+    // Modular import: same FieldValue, and it also works in the Functions
+    // emulator (which wraps admin.firestore and drops its static members).
+    const { FieldValue } = require("firebase-admin/firestore");
     const serverNow = FieldValue.serverTimestamp();
 
     // Latest-wins fields written on both create and update. Interests are
@@ -326,6 +330,11 @@ exports.syncMemberOnSignup = onDocumentCreated(
     const isSimplified = data.formVersion === 3;
     const submittedInterests = Array.isArray(data.interests) ? data.interests : [];
 
+    // Event/campaign history: each campaign id a person registered through,
+    // once (e.g. ["la-2026", "toronto-2027"]). Source/medium/content stay on
+    // the individual community-signups docs only.
+    const campaign = typeof data.utmCampaign === "string" ? data.utmCampaign : "";
+
     try {
       await admin.firestore().runTransaction(async (tx) => {
         const existing = await tx.get(ref);
@@ -337,18 +346,25 @@ exports.syncMemberOnSignup = onDocumentCreated(
             status: "subscribed",
             firstSeenAt: data.createdAt || serverNow,
             signupCount: 1,
+            ...(campaign ? { campaigns: [campaign] } : {}),
           });
         } else {
           // Existing member — merge latest prefs but DO NOT touch `status`
           // (preserves any unsubscribe) or `firstSeenAt`.
           const patch = { ...latest, signupCount: FieldValue.increment(1) };
+          if (campaign) patch.campaigns = FieldValue.arrayUnion(campaign);
           if (!isSimplified) {
-            // Preference-bearing form (v2 / future Manage Interests): interests
-            // are authoritative -> overwrite, and mint a one-time re-opt-in for
-            // any re-selected previously-DECLINED topic (opt_out). The browser
-            // can't set this (members is server-only); background/language
-            // updates never run this path, so a decline can't be reversed.
-            patch.interests = submittedInterests;
+            // Preference-bearing form (v2+): interests are ADDITIVE — newly
+            // ticked topics join the saved ones, and a topic left unticked is
+            // never removed, so registering again can't silently opt a member
+            // out of anything (only an explicit unsubscribe does that). A
+            // one-time re-opt-in is minted only for a previously-DECLINED topic
+            // (opt_out) the member explicitly ticked again. The browser can't
+            // set this (members is server-only).
+            const saved = Array.isArray((existing.data() || {}).interests)
+              ? existing.data().interests
+              : [];
+            patch.interests = [...new Set([...saved, ...submittedInterests])];
             const existingTopics = (existing.data() || {}).resendTopics || {};
             const reopt = submittedInterests
               .filter((s) => TOPIC_IDS[s])

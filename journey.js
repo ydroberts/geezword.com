@@ -1,7 +1,8 @@
 // Per-tab visitor journey memory shared by /play and /start.
 //
 // Remembers, in sessionStorage (this tab only, cleared when it closes):
-//   - campaign tags from the landing URL (utm_source / utm_medium / utm_campaign)
+//   - campaign tags from the landing URL (utm_source / utm_medium /
+//     utm_campaign / utm_content)
 //   - interests inferred from the paths the visitor clicked, or passed as
 //     ?interest=<slug> (the games' Parents & Teachers link sends games)
 // so a registration later in the same tab keeps its attribution and topic
@@ -9,7 +10,7 @@
 // registration only when the visitor submits the form.
 //
 // Tag values are normalised to the shape firestore.rules accepts for
-// utmSource / utmMedium / utmCampaign: lowercase a–z, 0–9, ".", "_" and "-",
+// utmSource / utmMedium / utmCampaign / utmContent: lowercase a–z, 0–9, ".", "_" and "-",
 // starting with a letter or digit, at most 50 characters.
 
 const CAMPAIGN_KEY = "geezword-start-campaign";
@@ -19,6 +20,7 @@ const CAMPAIGN_PARAMS = {
   utm_source:   "utmSource",
   utm_medium:   "utmMedium",
   utm_campaign: "utmCampaign",
+  utm_content:  "utmContent",
 };
 
 export function cleanTag(value) {

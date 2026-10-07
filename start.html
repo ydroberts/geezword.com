@@ -921,5 +921,11 @@
   </footer>
 
   <script src="script.js"></script>
+  <script type="module">
+    // Funnel step for campaign analytics (analytics.js): campaign source and
+    // content tags only — never the visitor's name, email or form contents.
+    import { trackStep } from "/analytics.js";
+    trackStep("start form");
+  </script>
 </body>
 </html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events — Geezword</title>
+  <meta name="description" content="Meet Geezword in person: book signings and community events for families, teachers and churches learning and teaching Tigrinya, Amharic and Geez.">
+  <link rel="canonical" href="https://www.geezword.com/events">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Geezword">
+  <meta property="og:title" content="Geezword Events">
+  <meta property="og:description" content="Book signings and community events for learning and teaching Tigrinya, Amharic and Geez.">
+  <meta property="og:url" content="https://www.geezword.com/events">
+  <meta property="og:image" content="https://www.geezword.com/images/events/events-og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Yemane Russom with the books Tigrinya for Beginners and Tigrinya Letter Tracing: Geezword Events">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://www.geezword.com/images/events/events-og.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..800&family=JetBrains+Mono:wght@400..700&family=Newsreader:opsz,wght@6..72,400..700&family=Noto+Sans+Ethiopic:wght@400..700&family=Noto+Serif+Ethiopic:wght@400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/events/events.css">
+</head>
+<body data-events-page="listing">
+
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">Geez<span>Word</span></a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/#apps">Apps</a></li>
+        <li><a href="/books">Books</a></li>
+        <li><a href="/downloads">Downloads</a></li>
+        <li><a href="/about">About</a></li>
+        <li><a href="/start" class="nav-join">Community</a></li>
+      </ul>
+      <div class="nav-search">
+        <span class="nav-search-icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search apps..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <button class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    </div>
+  </nav>
+
+  <main>
+    <section class="event-hero">
+      <div class="event-hero-inner">
+        <p class="event-eyebrow">Geezword Events</p>
+        <h1>Meet us in person</h1>
+        <p class="event-lead">Book signings and community events for families, teachers and churches learning and teaching Tigrinya, Amharic and Geez.</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="upcoming-heading">
+      <div class="container">
+        <div class="section-header">
+          <h2 id="upcoming-heading">Upcoming events</h2>
+        </div>
+        <ul class="event-list" data-slot="upcoming">
+          <li class="event-card">
+            <p class="event-card-type">Book signing</p>
+            <h3><a href="/events/los-angeles-2026">Book Signing &amp; Community Event · Los Angeles</a></h3>
+            <p class="event-card-when">Date to be announced</p>
+            <a class="btn btn-primary" href="/events/los-angeles-2026">Event details &#8594;</a>
+          </li>
+        </ul>
+        <p class="event-previous" data-slot="previous">
+          <span class="previous-label">Previous book signings: </span><span class="previous-item">Houston — July 11, 2026</span> · <span class="previous-item">San Antonio — September 19, 2026</span>
+        </p>
+      </div>
+    </section>
+
+    <section class="section section-alt" aria-labelledby="join-heading">
+      <div class="container">
+        <div class="section-header">
+          <h2 id="join-heading">Hear about the next event</h2>
+          <p>Join the Geezword Community for event announcements, new learning resources, games and books.</p>
+        </div>
+        <div class="event-try">
+          <a href="/start#community" class="btn btn-primary" data-join>Join the Geezword Community &#8594;</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <h3>GeezWord</h3>
+        <p>Bridging diaspora communities with their homeland through language and culture. Learn Geez, Amharic, and Tigrinya with interactive tools built for the modern world.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/events">Events</a></li>
+          <li><a href="/books">Books</a></li>
+          <li><a href="/downloads">Downloads</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/start">Community</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Apps</h4>
+        <ul>
+          <li><a href="https://games.geezword.com">GeezWord Games</a></li>
+          <li><a href="https://kidase.geezword.com">Kidase Tutor</a></li>
+          <li><a href="https://lissan.geezword.com">Geez Lissan</a></li>
+          <li><a href="https://tigrinya-for-beginners.geezword.com">Tigrinya for Beginners</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 GeezWord. All rights reserved. &middot; <a href="/privacy">Privacy</a></p>
+    </div>
+  </footer>
+
+  <script src="/script.js"></script>
+  <script type="module" src="/events/event-page.js"></script>
+</body>
+</html>

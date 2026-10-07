@@ -1,4 +1,16 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/la",
+      "destination": "/events/los-angeles-2026?utm_campaign=la-2026&utm_source=short-link&utm_medium=offline",
+      "permanent": false
+    },
+    {
+      "source": "/losangeles",
+      "destination": "/events/los-angeles-2026?utm_campaign=la-2026&utm_source=short-link&utm_medium=offline",
+      "permanent": false
+    }
+  ]
 }

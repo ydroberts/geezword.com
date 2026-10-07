@@ -1537,3 +1537,18 @@ img {
     display: inline-flex;
   }
 }
+
+/* Homepage Community band: link to /events (Events, Decision #4) */
+.community-band p.community-events {
+  margin: var(--gz-space-2) 0 0;
+}
+
+.community-events a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  color: var(--gz-indigo);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

@@ -1348,6 +1348,17 @@ img {
   justify-content: flex-start;
 }
 
+.featured-content .featured-note {
+  margin: var(--gz-space-4) 0 0;
+}
+
+.featured-note a {
+  color: var(--gz-indigo);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .kidase-preview {
   display: flex;
   flex-direction: column;

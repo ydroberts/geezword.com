@@ -539,7 +539,8 @@ img {
   object-position: top;
 }
 
-.app-card h4 {
+.app-card h4,
+.app-card h3.app-card-title {
   font-size: var(--gz-text-sm);
   font-weight: 600;
   margin-bottom: var(--gz-space-2);
@@ -597,6 +598,12 @@ img {
 .tag-new {
   background: rgba(90, 107, 58, 0.15);
   color: var(--gz-moss);
+}
+
+/* Paid product (Downloads page). The word itself carries the meaning. */
+.tag-paid {
+  background: rgba(31, 42, 92, 0.12);
+  color: var(--gz-indigo);
 }
 
 .tag-live {

@@ -476,6 +476,7 @@ img {
 }
 
 /* Anchor offset so the sticky navbar doesn't overlap the section top. */
+#explore,
 #apps,
 #learn-paths,
 #play,
@@ -761,6 +762,7 @@ img {
   flex-grow: 1;
 }
 
+.book-info h3,
 .book-info h4 {
   font-size: var(--gz-text-base);
   font-weight: 700;
@@ -1279,6 +1281,58 @@ img {
 
 .link-list a:hover {
   color: var(--gz-saffron-deep);
+}
+
+/* Homepage front doors: "What would you like to do?" (six doors).
+   Three across on desktop, two on tablets, one on phones. */
+.door-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gz-space-6);
+}
+
+.door-card {
+  background: var(--gz-parchment);
+  border-radius: var(--radius);
+  padding: var(--gz-space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.door-glyph {
+  font-family: var(--gz-font-ethiopic-text);
+  font-size: var(--gz-text-2xl);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--gz-saffron-deep);
+  margin-bottom: var(--gz-space-2);
+}
+
+.door-card h3 {
+  font-size: var(--gz-text-xl);
+  font-weight: 700;
+  color: var(--gz-indigo);
+  margin-bottom: var(--gz-space-2);
+}
+
+.door-card p {
+  font-size: var(--gz-text-sm);
+  color: var(--text-mid);
+  margin-bottom: var(--gz-space-4);
+  flex-grow: 1;
+}
+
+@media (max-width: 900px) {
+  .door-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .door-grid { grid-template-columns: minmax(0, 1fr); }
+  .door-card .door-link { width: 100%; justify-content: center; text-align: center; }
 }
 
 /* Language entry: Tigrinya / Amharic / Geez & Kidase */

@@ -42,11 +42,11 @@
       <div class="hero-content">
         <h1>
           <span class="geez-script">&#4877;&#4821;&#4829; &#4808;&#4653;&#4853;</span>
-          Learn Your Language, Keep Your Roots
+          Learn Your Language. Keep Your Roots.
         </h1>
         <p>Modern tools and resources for learning and teaching Tigrinya, Amharic and Geez/Kidase.</p>
         <div class="hero-buttons">
-          <a href="#learn-paths" class="btn btn-primary">Start Learning &#8594;</a>
+          <a href="#explore" class="btn btn-primary">Start Exploring &#8594;</a>
           <a href="/play" class="btn btn-secondary">Play Free</a>
         </div>
         <p class="hero-community">New here? <a href="/start#community">Join the Geezword Community, free &#8594;</a></p>
@@ -62,11 +62,68 @@
     </div>
   </section>
 
-  <!-- Language entry: three paths -->
-  <section class="section" id="learn-paths" data-nav-section="home">
+  <!-- Front doors: six things a visitor can do. Each door goes to an existing,
+       working destination (a section of this page, a site page or an app). -->
+  <section class="section section-alt" id="explore" data-nav-section="home" aria-labelledby="explore-heading">
     <div class="container">
       <div class="section-header">
-        <h2>What would you like to learn?</h2>
+        <h2 id="explore-heading">What would you like to do?</h2>
+        <p>Choose what you want to explore today.</p>
+      </div>
+      <ul class="door-grid">
+
+        <li class="door-card" id="door-learn">
+          <span class="door-glyph geez-script" aria-hidden="true">&#4608;</span>
+          <h3>Learn</h3>
+          <p>Learn Tigrinya, Amharic or Geez, starting from the alphabet.</p>
+          <a href="#learn-paths" class="btn btn-secondary door-link">Start learning&nbsp;&#8594;</a>
+        </li>
+
+        <li class="door-card" id="door-play">
+          <span class="door-glyph geez-script" aria-hidden="true">&#4936;</span>
+          <h3>Play</h3>
+          <p>Practice through alphabet games and daily challenges.</p>
+          <a href="/play" class="btn btn-secondary door-link">Play free&nbsp;&#8594;</a>
+        </li>
+
+        <li class="door-card" id="door-read">
+          <span class="door-glyph geez-script" aria-hidden="true">&#4632;</span>
+          <h3>Read</h3>
+          <p>Explore Geezword books and companion materials.</p>
+          <a href="/books" class="btn btn-secondary door-link">Explore books&nbsp;&#8594;</a>
+        </li>
+
+        <li class="door-card" id="door-type">
+          <span class="door-glyph geez-script" aria-hidden="true">&#4938;</span>
+          <h3>Type</h3>
+          <p>Get keyboards, fonts and typing resources.</p>
+          <a href="/downloads" class="btn btn-secondary door-link">Get keyboards &amp; fonts&nbsp;&#8594;</a>
+        </li>
+
+        <li class="door-card" id="door-kidase">
+          <span class="door-glyph geez-script" aria-hidden="true">&#4677;</span>
+          <h3>Kidase</h3>
+          <p>Learn Kidase with guided text and audio.</p>
+          <a href="https://kidase.geezword.com" class="btn btn-secondary door-link">Explore Kidase&nbsp;&#8594;</a>
+        </li>
+
+        <li class="door-card" id="door-teach">
+          <span class="door-glyph geez-script" aria-hidden="true">&#4637;</span>
+          <h3>Teach</h3>
+          <p>Find resources for parents, teachers and community classes.</p>
+          <a href="#teach" class="btn btn-secondary door-link">Teaching resources&nbsp;&#8594;</a>
+        </li>
+
+      </ul>
+    </div>
+  </section>
+
+  <!-- Learn: language entry (Tigrinya / Amharic / Geez & Kidase), reached
+       from the Learn door. The id is unchanged so existing links still work. -->
+  <section class="section" id="learn-paths" data-nav-section="apps" aria-labelledby="learn-heading">
+    <div class="container">
+      <div class="section-header">
+        <h2 id="learn-heading">Start learning</h2>
         <p>Choose a language to see where to begin.</p>
       </div>
       <div class="path-grid">
@@ -257,7 +314,7 @@
             <li><a href="https://tigrinya-for-beginners.geezword.com">Tigrinya for Beginners app</a></li>
             <li><a href="https://lissan.geezword.com">Geez Lissan</a></li>
           </ul>
-          <a href="/start?interest=childrens-learning#community" class="btn btn-secondary">Get updates for parents &#8594;</a>
+          <a href="/start#community" class="btn btn-secondary">Get updates for parents &#8594;</a>
         </div>
 
         <div class="teach-card">
@@ -291,7 +348,7 @@
             <img src="images/tigrinya-for-beginners.jpg" alt="Tigrinya for Beginners book cover" loading="lazy">
           </div>
           <div class="book-info">
-            <h4>Tigrinya for Beginners</h4>
+            <h3>Tigrinya for Beginners</h3>
             <p>The first complete beginner's guide to Tigrinya.</p>
             <div class="book-price">
               <span class="price-now">$35.00</span>
@@ -304,7 +361,7 @@
             <img src="images/tigrinya-letter-tracing.jpg" alt="Tigrinya Letter Tracing book cover" loading="lazy">
           </div>
           <div class="book-info">
-            <h4>Tigrinya Letter Tracing</h4>
+            <h3>Tigrinya Letter Tracing</h3>
             <p>The most comprehensive beginner-friendly Tigrinya letter tracing book.</p>
             <div class="book-price">
               <span class="price-now">$30.00</span>

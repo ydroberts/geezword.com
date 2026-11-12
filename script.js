@@ -112,8 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     { name: 'GeezType to Unicode', desc: 'Convert GeezType text to Unicode with DOCX export', url: 'apps.html', tags: 'tool converter unicode' },
     { name: 'GeezmezGeb', desc: 'Geez text utility for working with Geez script', url: 'apps.html', tags: 'tool utility' },
     { name: 'Geez Lissan', desc: 'Language learning for Amharic, Tigrinya, English, and Arabic', url: 'https://lissan.geezword.com', tags: 'learning languages live' },
-    { name: 'Amharic Learning Portal', desc: 'Unified portal combining multiple Amharic learning apps', url: 'playground.html', tags: 'learning portal amharic alpha' },
-    { name: 'GeezWord AI Chat', desc: 'AI chatbot for conversational Geez language practice', url: 'playground.html', tags: 'ai chat alpha' },
   ];
 
   const searchInput = document.getElementById('searchInput');
@@ -134,8 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
       searchResults.classList.add('open');
     }
 
-    // Show all apps on focus
+    // Show all apps on focus (but not when Escape just returned focus here)
+    let keepClosedOnFocus = false;
     searchInput.addEventListener('focus', () => {
+      if (keepClosedOnFocus) { keepClosedOnFocus = false; return; }
       const query = searchInput.value.toLowerCase().trim();
       if (!query) {
         renderApps(apps);
@@ -166,6 +166,26 @@ document.addEventListener('DOMContentLoaded', () => {
         searchResults.classList.remove('open');
       }
     });
+
+    // Close when keyboard focus leaves the search box and its results, so
+    // the panel doesn't cover the page while someone tabs on.
+    const searchBox = searchInput.closest('.nav-search') || searchInput.parentElement;
+    searchBox.addEventListener('focusout', (e) => {
+      if (!e.relatedTarget || !searchBox.contains(e.relatedTarget)) {
+        searchResults.classList.remove('open');
+      }
+    });
+
+    // Escape closes the results and keeps focus in the search box.
+    searchBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchResults.classList.contains('open')) {
+        searchResults.classList.remove('open');
+        if (document.activeElement !== searchInput) {
+          keepClosedOnFocus = true;
+          searchInput.focus();
+        }
+      }
+    });
   }
 
   // === Scroll-reveal — fade sections and cards up as they enter the viewport ===
@@ -185,3 +205,30 @@ document.addEventListener('DOMContentLoaded', () => {
     revealTargets.forEach(el => revealObserver.observe(el));
   }
 });
+
+// === Re-align a #section link after the page settles ===
+// When a page opens at a #section, the browser jumps there before web fonts
+// and images finish loading; that late layout shift can leave the section
+// under the sticky navigation. Once loading is done, scroll the target into
+// place again (its CSS scroll-margin-top clears the navigation) — unless the
+// visitor has already started scrolling or interacting.
+(() => {
+  if (window.location.hash.length < 2) return;
+  let visitorMoved = false;
+  const moved = () => { visitorMoved = true; };
+  ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(type =>
+    window.addEventListener(type, moved, { once: true, passive: true }));
+  const fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  const loaded = new Promise(resolve => {
+    if (document.readyState === 'complete') resolve();
+    else window.addEventListener('load', resolve, { once: true });
+  });
+  Promise.all([fontsReady, loaded]).then(() => {
+    if (visitorMoved) return;
+    let target = null;
+    try { target = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); } catch (e) { /* bad hash */ }
+    if (!target) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+  });
+})();

@@ -9,3 +9,7 @@ httpsgeezword.comads.txt.txt
 
 .vercel
 .env*.local
+
+# Firebase emulator logs (functions: npm test)
+firestore-debug.log
+firebase-debug.log

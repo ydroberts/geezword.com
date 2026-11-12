@@ -145,7 +145,10 @@ test("no existing homepage destination was lost", async ({ page }) => {
   const now = new Set(await page.locator("a").evaluateAll((as) => as.map((a) => a.getAttribute("href"))));
   // Approved replacements: the simplified Community form ignores ?interest=.
   const REPLACED = { "/start?interest=childrens-learning#community": "/start#community" };
-  const lost = [...oldHrefs].filter((h) => !now.has(REPLACED[h] || h));
+  // Approved menu simplification: these section links left the header menu
+  // (the sections themselves stay on the page; checked below).
+  const LEFT_MENU = new Set(["#apps", "#teach", "#books"]);
+  const lost = [...oldHrefs].filter((h) => !LEFT_MENU.has(h) && !now.has(REPLACED[h] || h));
   expect(lost, "links present on master but missing now").toEqual([]);
   // Every product/app card is still there.
   await expect(page.locator("#apps .app-card")).toHaveCount(9);
@@ -167,14 +170,11 @@ test("no homepage link carries the ignored ?interest= parameter; Teach updates g
   expect(html).not.toContain('name="interests"'); // the simplified form
 });
 
-test("homepage navigation is unchanged from master", async ({ page }) => {
-  const before = execFileSync("git", ["show", "origin/master:index.html"], { cwd: REPO_ROOT, encoding: "utf8" });
-  const navBefore = before.match(/<nav class="navbar">[\s\S]*?<\/nav>/)[0].replace(/\r/g, "");
-  const { readFileSync } = require("fs");
-  const navNow = readFileSync(path.join(REPO_ROOT, "index.html"), "utf8").match(/<nav class="navbar">[\s\S]*?<\/nav>/)[0].replace(/\r/g, "");
-  expect(navNow).toBe(navBefore);
+test("homepage uses the six-item primary menu (full checks in navigation.spec.js)", async ({ page }) => {
   await openHome(page);
-  expect(await page.locator(".nav-links a").allInnerTexts()).toEqual(["Home", "Learn & Play", "Teach", "Books", "Kidase", "Community"]);
+  expect(await page.locator(".nav-links a").allInnerTexts()).toEqual(["Home", "Apps", "Keyboard", "Downloads", "Kidase", "Community"]);
+  // Sections that left the menu are still on the page.
+  for (const id of ["#apps", "#teach", "#books"]) await expect(page.locator(id)).toHaveCount(1);
 });
 
 test("all internal homepage links resolve", async ({ page, request }) => {

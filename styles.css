@@ -219,7 +219,7 @@ img {
   display: none;
   position: absolute;
   top: 44px;
-  left: 0;
+  left: auto; /* grow leftwards from the right edge, never past the page */
   right: 0;
   background: var(--white);
   border: 1px solid var(--border);
@@ -484,7 +484,8 @@ img {
 #books,
 #kidase,
 #community,
-#history {
+#history,
+#keyboards {
   scroll-margin-top: 80px;
 }
 
@@ -1550,22 +1551,23 @@ img {
   }
 }
 
-/* === Homepage section menu: active item (scroll-spy in script.js) ===
-   Scoped to .nav-sections so other pages' menus are unchanged. */
+/* === Primary menu: active item (all pages) ===
+   Pages mark their own item (aria-current="page"); the homepage lights the
+   section in view (scroll-spy in script.js, aria-current="location"). */
 #home {
   scroll-margin-top: 64px;
 }
 
-.nav-sections a {
+.nav-links a {
   position: relative;
 }
 
-.nav-sections a.active:not(.nav-join) {
+.nav-links a.active:not(.nav-join) {
   color: var(--gz-indigo);
   font-weight: 700;
 }
 
-.nav-sections a.active:not(.nav-join)::after {
+.nav-links a.active:not(.nav-join)::after {
   content: "";
   position: absolute;
   left: 0;
@@ -1576,26 +1578,46 @@ img {
   background: var(--gz-saffron);
 }
 
-.nav-sections a.nav-join.active {
+.nav-links a.nav-join.active {
   background: var(--gz-saffron-deep);
   box-shadow: 0 0 0 2px var(--gz-indigo);
 }
 
 /* Six items + search: tighten spacing where the bar is narrowest */
 @media (min-width: 769px) and (max-width: 1100px) {
-  .nav-sections {
+  .nav-links {
     gap: var(--gz-space-4);
   }
 }
 
+/* Narrowest desktop widths: a shorter search box keeps the logo, the six
+   items and search on one row with clear space between them. */
+@media (min-width: 769px) and (max-width: 960px) {
+  .navbar {
+    padding: 0 var(--gz-space-4);
+  }
+
+  .nav-links {
+    gap: var(--gz-space-3);
+  }
+
+  .nav-search input {
+    width: 140px;
+  }
+
+  .nav-search input:focus {
+    width: 160px;
+  }
+}
+
 @media (max-width: 768px) {
-  .nav-sections a {
+  .nav-links a {
     display: flex;
     align-items: center;
     min-height: 44px;
   }
 
-  .nav-sections a.active:not(.nav-join)::after {
+  .nav-links a.active:not(.nav-join)::after {
     right: auto;
     top: 50%;
     bottom: auto;
@@ -1605,7 +1627,7 @@ img {
     transform: translateY(-50%);
   }
 
-  .nav-sections a.nav-join {
+  .nav-links a.nav-join {
     display: inline-flex;
   }
 }

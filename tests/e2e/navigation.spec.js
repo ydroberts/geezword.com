@@ -313,3 +313,25 @@ test("header search still finds apps", async ({ page }) => {
   await page.locator("#searchInput").fill("kidase");
   await expect(page.locator("#searchResults")).toContainText("Kidase");
 });
+
+// Inner-page headers line up with the logo and content on every screen width
+// (on very wide screens they used to sit at the far-left edge).
+for (const width of [390, 1280, 1440, 1920, 2552]) {
+  test(`page headers align with the logo at ${width}px (apps, books, downloads)`, async ({ page }) => {
+    await quiet(page);
+    await page.setViewportSize({ width, height: 900 });
+    for (const name of ["apps", "books", "downloads"]) {
+      await page.goto(`${BASE}/${name}`);
+      const m = await page.evaluate(() => {
+        const L = (s) => document.querySelector(s).getBoundingClientRect().left;
+        const p = document.querySelector(".hero p").getBoundingClientRect();
+        return { h1: L(".hero h1"), logo: L(".nav-logo"), content: L(".section .container"), pWidth: p.width, scrollW: document.documentElement.scrollWidth, innerW: innerWidth };
+      });
+      expect(Math.abs(m.h1 - m.logo), `${name}: heading vs logo`).toBeLessThanOrEqual(2);
+      expect(Math.abs(m.h1 - m.content), `${name}: heading vs content`).toBeLessThanOrEqual(2);
+      expect(m.pWidth, `${name}: intro keeps its line length`).toBeLessThanOrEqual(640);
+      expect(m.scrollW).toBeLessThanOrEqual(m.innerW);
+      if (SHOTS && width === 2552 && name === "downloads") await page.screenshot({ path: path.join(SHOTS, "downloads-2552.png") });
+    }
+  });
+}

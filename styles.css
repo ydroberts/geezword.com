@@ -289,6 +289,17 @@ img {
   max-width: 640px;
 }
 
+/* Inner-page headers (Apps, Books, Downloads) have no .hero-inner wrapper:
+   align them with the logo and page content on wide screens. */
+.hero > .hero-content {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.hero > .hero-content p {
+  max-width: 640px;
+}
+
 .hero h1 {
   font-size: var(--gz-text-4xl);
   font-weight: 800;

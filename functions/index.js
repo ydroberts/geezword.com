@@ -39,6 +39,10 @@ const { logger } = require("firebase-functions");
 const { Resend } = require("resend");
 const { Webhook } = require("svix");
 const admin = require("firebase-admin");
+// Modular import: the same FieldValue as admin.firestore.FieldValue in
+// production, and it also works in the Functions emulator (which wraps
+// admin.firestore and drops its static members such as FieldValue).
+const { FieldValue } = require("firebase-admin/firestore");
 const crypto = require("crypto");
 
 // Admin SDK — bypasses security rules. Used to (a) check new-vs-update on
@@ -261,7 +265,8 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
  *
  * Guarantees (per product requirements):
  *  - Email is trimmed + lowercased BEFORE hashing → one member per person.
- *  - LATEST preferred language + interests + firstName win on each signup.
+ *  - LATEST preferred language + firstName win on each signup; interests are
+ *    added to (never removed by) a later preference-bearing signup.
  *  - An `unsubscribed` member is NEVER silently re-subscribed: on update we
  *    do not write `status`, so a prior opt-out is preserved. (Phase 2 keeps
  *    this in two-way sync with Resend so opt-outs can't be emailed.)
@@ -296,7 +301,6 @@ exports.syncMemberOnSignup = onDocumentCreated(
 
     const memberId = memberIdFor(email);
     const ref = admin.firestore().collection("members").doc(memberId);
-    const FieldValue = admin.firestore.FieldValue;
     const serverNow = FieldValue.serverTimestamp();
 
     // Latest-wins fields written on both create and update. Interests are
@@ -343,12 +347,17 @@ exports.syncMemberOnSignup = onDocumentCreated(
           // (preserves any unsubscribe) or `firstSeenAt`.
           const patch = { ...latest, signupCount: FieldValue.increment(1) };
           if (!isSimplified) {
-            // Preference-bearing form (v2 / future Manage Interests): interests
-            // are authoritative -> overwrite, and mint a one-time re-opt-in for
-            // any re-selected previously-DECLINED topic (opt_out). The browser
-            // can't set this (members is server-only); background/language
-            // updates never run this path, so a decline can't be reversed.
-            patch.interests = submittedInterests;
+            // Preference-bearing form (v2+): interests are ADDITIVE — newly
+            // ticked topics join the saved ones, and a topic left unticked is
+            // never removed, so registering again can't silently opt a member
+            // out of anything (only an explicit unsubscribe does that). A
+            // one-time re-opt-in is minted only for a previously-DECLINED topic
+            // (opt_out) the member explicitly ticked again. The browser can't
+            // set this (members is server-only).
+            const saved = Array.isArray((existing.data() || {}).interests)
+              ? existing.data().interests
+              : [];
+            patch.interests = [...new Set([...saved, ...submittedInterests])];
             const existingTopics = (existing.data() || {}).resendTopics || {};
             const reopt = submittedInterests
               .filter((s) => TOPIC_IDS[s])
@@ -515,11 +524,11 @@ exports.syncMemberToResend = onDocumentWritten(
         resendContactId: contactId || null,
         resendTopics: newTopics,      // 3-state mirror (opt_in/opt_out; absent=default)
         topicsInitialized: true,
-        resendSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+        resendSyncedAt: FieldValue.serverTimestamp(),
         resendSyncError: null,
       };
       // Consume the one-time re-opt instruction so it can never replay.
-      if (hadReopt) writeBack.topicReoptIn = admin.firestore.FieldValue.delete();
+      if (hadReopt) writeBack.topicReoptIn = FieldValue.delete();
       await after.ref.set(writeBack, { merge: true });
       logger.info("Member → Resend synced", { memberId, unsubscribed, reopt: hadReopt });
     } catch (err) {
@@ -598,7 +607,6 @@ exports.resendWebhook = onRequest(
     const db = admin.firestore();
     const dedupRef = db.collection("processed_webhooks").doc(svixId);
     const memberRef = db.collection("members").doc(memberId);
-    const FieldValue = admin.firestore.FieldValue;
     const eventTime = evt && evt.created_at ? new Date(evt.created_at) : null;
 
     try {

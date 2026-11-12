@@ -46,6 +46,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // A menu item can point at a section of the current page (Keyboard →
+  // downloads.html#keyboards on /downloads). Light that item when the address
+  // names its section, and the page's own item (Downloads) otherwise.
+  const pageItem = document.querySelector('.nav-links a[aria-current="page"]');
+  if (pageItem) {
+    const pageHref = pageItem.getAttribute('href');
+    const hashItems = [...document.querySelectorAll('.nav-links a')]
+      .filter(a => a.getAttribute('href').startsWith(pageHref + '#'));
+    if (hashItems.length) {
+      const syncHashItem = () => {
+        const hit = hashItems.find(a => a.getAttribute('href').slice(pageHref.length) === window.location.hash);
+        const on = hit || pageItem;
+        [pageItem, ...hashItems].forEach(a => {
+          a.classList.toggle('active', a === on);
+          if (a === on) a.setAttribute('aria-current', 'page');
+          else a.removeAttribute('aria-current');
+        });
+      };
+      syncHashItem();
+      window.addEventListener('hashchange', syncHashItem);
+    }
+  }
+
   // === Homepage section highlight (scroll-spy) ===
   // The homepage menu links to sections (#home, #apps, …). The active item is
   // the last section whose top has passed a line ~40% down the visible area,

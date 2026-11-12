@@ -139,6 +139,41 @@ test("homepage: Home is lit at the top; Kidase and Community light when scrolled
   await expect(page).toHaveURL(/\/apps(\.html)?$/);
 });
 
+// Keyboard and Downloads share a page; the highlight must follow what was clicked.
+test("Keyboard lights Keyboard, Downloads lights Downloads — never the other", async ({ page }) => {
+  await quiet(page);
+  const lit = () => page.locator(".navbar .nav-links a.active").allInnerTexts();
+  const current = () => page.locator('.navbar .nav-links a[aria-current="page"]').allInnerTexts();
+  for (const [w, h] of [[1280, 800], [390, 844]]) {
+    await page.setViewportSize({ width: w, height: h });
+    const click = async (label) => {
+      if (w < 769) await page.locator(".nav-toggle").click();
+      await page.locator(".navbar .nav-links a", { hasText: new RegExp(`^${label}$`) }).click();
+    };
+    // From another page.
+    await page.goto(`${BASE}/`);
+    await click("Keyboard");
+    await page.waitForURL(/downloads(\.html)?#keyboards$/, { waitUntil: "load" });
+    expect(await lit(), `${w}: after Keyboard`).toEqual(["Keyboard"]);
+    expect(await current()).toEqual(["Keyboard"]);
+    await page.goto(`${BASE}/`);
+    await click("Downloads");
+    await page.waitForURL(/downloads(\.html)?$/, { waitUntil: "load" });
+    expect(await lit(), `${w}: after Downloads`).toEqual(["Downloads"]);
+    expect(await current()).toEqual(["Downloads"]);
+    // Already on /downloads: Keyboard is an in-page jump (hashchange), then back.
+    await click("Keyboard");
+    await expect(page).toHaveURL(/#keyboards$/);
+    await expect.poll(lit).toEqual(["Keyboard"]);
+    await click("Downloads");
+    await page.waitForURL(/downloads(\.html)?$/, { waitUntil: "load" });
+    expect(await lit(), `${w}: back to Downloads`).toEqual(["Downloads"]);
+    // Opened directly from a link or bookmark.
+    await page.goto(`${BASE}/downloads#keyboards`);
+    expect(await lit()).toEqual(["Keyboard"]);
+  }
+});
+
 test("every menu destination returns 200 and every in-page target exists", async ({ request }) => {
   for (const p of ["/", "/index.html", "/apps.html", "/downloads.html", "/start.html", "/apps", "/downloads", "/start"]) {
     expect((await request.get(`${BASE}${p}`)).status(), p).toBe(200);

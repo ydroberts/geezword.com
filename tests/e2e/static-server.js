@@ -32,8 +32,31 @@ function resolveFile(urlPath) {
   return null;
 }
 
+// Redirects from vercel.json (exact-path sources only, which is all the site
+// uses): permanent → 308, otherwise 307, with the destination as Location —
+// the same responses `vercel dev` returns for these entries.
+function loadRedirects() {
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, "vercel.json"), "utf8"));
+    return Array.isArray(cfg.redirects) ? cfg.redirects : [];
+  } catch (err) {
+    return [];
+  }
+}
+
 function start(port) {
+  const redirects = loadRedirects();
   const server = http.createServer((req, res) => {
+    const pathname = decodeURIComponent(req.url.split("?")[0]);
+    const redirect = redirects.find((r) => r.source === pathname);
+    if (redirect) {
+      res.writeHead(redirect.permanent ? 308 : 307, {
+        Location: redirect.destination,
+        "Cache-Control": "public, max-age=0, must-revalidate",
+      });
+      res.end();
+      return;
+    }
     const file = resolveFile(req.url);
     if (!file) {
       res.writeHead(404, { "Content-Type": "text/plain" });

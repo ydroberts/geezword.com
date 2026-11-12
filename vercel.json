@@ -1,4 +1,11 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/la",
+      "destination": "/?utm_source=qr&utm_medium=print&utm_campaign=la-book-signing-2026#explore",
+      "permanent": false
+    }
+  ]
 }

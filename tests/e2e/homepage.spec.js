@@ -13,10 +13,10 @@ const BASE = `http://127.0.0.1:${SITE_PORT}`;
 const SHOTS = process.env.E2E_SCREENSHOT_DIR || "";
 
 const DOORS = [
-  { id: "door-learn", name: "Learn", label: "Start learning →", href: "#learn-paths" },
+  { id: "door-learn", name: "Learn", label: "Start learning →", href: "/learn" },
   { id: "door-play", name: "Play", label: "Play free →", href: "/play" },
   { id: "door-read", name: "Read", label: "Explore books →", href: "/books" },
-  { id: "door-type", name: "Type", label: "Get keyboards & fonts →", href: "/downloads" },
+  { id: "door-type", name: "Type", label: "Keyboards & text tools →", href: "/type" },
   { id: "door-kidase", name: "Kidase", label: "Explore Kidase →", href: "https://kidase.geezword.com" },
   { id: "door-teach", name: "Teach", label: "Teaching resources →", href: "#teach" },
 ];
@@ -144,14 +144,18 @@ test("no existing homepage destination was lost", async ({ page }) => {
   await openHome(page);
   const now = new Set(await page.locator("a").evaluateAll((as) => as.map((a) => a.getAttribute("href"))));
   // Approved replacements: the simplified Community form ignores ?interest=.
-  const REPLACED = { "/start?interest=childrens-learning#community": "/start#community" };
+  const REPLACED = {
+    "/start?interest=childrens-learning#community": "/start#community",
+    // LA final touches: Learn and Type doors open the new section pages.
+    "#learn-paths": "/learn", "/downloads": "/type",
+  };
   // Approved menu simplification: these section links left the header menu
   // (the sections themselves stay on the page; checked below).
   const LEFT_MENU = new Set(["#apps", "#teach", "#books"]);
   const lost = [...oldHrefs].filter((h) => !LEFT_MENU.has(h) && !now.has(REPLACED[h] || h));
   expect(lost, "links present on master but missing now").toEqual([]);
   // Every product/app card is still there.
-  await expect(page.locator("#apps .app-card")).toHaveCount(9);
+  await expect(page.locator("#apps .app-card")).toHaveCount(10); // + Geez Text Reader (preview)
   await expect(page.locator("#books .book-card")).toHaveCount(2);
   await expect(page.locator("#teach .teach-card")).toHaveCount(2);
   await expect(page.locator("#kidase a[href='/premium']")).toHaveCount(1);
@@ -172,7 +176,7 @@ test("no homepage link carries the ignored ?interest= parameter; Teach updates g
 
 test("homepage uses the six-item primary menu (full checks in navigation.spec.js)", async ({ page }) => {
   await openHome(page);
-  expect(await page.locator(".nav-links a").allInnerTexts()).toEqual(["Home", "Learn & Play", "Type & Translate", "Books", "Kidase", "Community"]);
+  expect(await page.locator(".nav-links a").allInnerTexts()).toEqual(["Home", "Learn & Play", "Type & Translate", "Downloads", "Books", "Kidase", "Community"]);
   // Sections that left the menu are still on the page.
   for (const id of ["#apps", "#teach", "#books"]) await expect(page.locator(id)).toHaveCount(1);
 });

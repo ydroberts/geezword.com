@@ -20,6 +20,8 @@ const VERIFIED_APPS = new Set([
   "tigrinya-for-beginners.geezword.com", "tracing.geezword.com",
   "games.geezword.com", "racing.geezword.com", "kidase.geezword.com",
 ]);
+// Working tools smoke-tested 2026-11-13, listed with a "Preview" label.
+const PREVIEW_TOOLS = new Set(["geez-text-reader.vercel.app", "geeztype-to-unicode.vercel.app"]);
 const PAGES = ["index", "about", "apps", "books", "challenge", "downloads", "learn", "play", "premium", "privacy", "start", "type"];
 
 let server;
@@ -37,7 +39,8 @@ test("Learn & Play links only to verified published apps and existing pages", as
   await page.goto(`${BASE}/learn`);
   const hrefs = await mainLinks(page);
   const external = hrefs.filter((h) => !h.startsWith(BASE) && !h.startsWith("mailto:"));
-  for (const h of external) expect(VERIFIED_APPS.has(new URL(h).host), h).toBe(true);
+  for (const h of external) expect(VERIFIED_APPS.has(new URL(h).host) || new URL(h).host === "geez-text-reader.vercel.app", h).toBe(true);
+  await expect(page.locator("#text-reader-card .tag-preview")).toHaveText("Preview");
   for (const host of ["universe", "quest", "lissan", "tigrinya-for-beginners", "tracing", "games", "racing"]) {
     expect(external.some((h) => new URL(h).host === `${host}.geezword.com`), host).toBe(true);
   }
@@ -46,28 +49,32 @@ test("Learn & Play links only to verified published apps and existing pages", as
   // Kidase has its own menu item: no Kidase app card in the Learn & Play grid.
   await expect(page.locator('.app-card[href="https://kidase.geezword.com"]')).toHaveCount(0);
   await expect(page.locator("#teach")).toHaveCount(1);
-  expect(read("learn.html")).not.toMatch(/vercel\.app|adsbygoogle|googlesyndication/);
+  expect(read("learn.html").replace(/geez-text-reader\.vercel\.app/g, "")).not.toMatch(/vercel\.app|adsbygoogle|googlesyndication/);
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, "learn-1440.png"), fullPage: true });
 });
 
-test("Type & Translate shows the paid keyboard and fonts; future features are labelled and unlinked", async ({ page }) => {
+test("Type & Translate: paid keyboard, fonts, preview text tools; online typing and translation planned and unlinked", async ({ page }) => {
   await quiet(page);
   await page.goto(`${BASE}/type`);
   const kb = page.locator("#geezword-desktop");
   await expect(kb.locator(".tag-paid")).toHaveText("Paid");
   await expect(kb.locator('a[href^="mailto:info@geezword.com"]')).toHaveCount(1);
   await expect(page.locator('a[href="downloads.html#fonts"]')).toHaveCount(1);
-  await expect(page.locator('body > section a[href="downloads.html"]')).toHaveCount(1);
-  const later = page.locator("#coming-later").locator("xpath=ancestor::section").locator(".app-card");
-  await expect(later).toHaveCount(3);
-  expect(await later.locator("h3").allInnerTexts()).toEqual(["Type online", "Translation", "GeezType to Unicode"]);
-  for (let i = 0; i < 3; i++) {
-    await expect(later.nth(i).locator(".tag-preview")).toHaveText("Coming later");
-    await expect(later.nth(i).locator("a")).toHaveCount(0);
+  // Text tools: linked, labelled Preview.
+  await expect(page.locator("#text-reader")).toHaveAttribute("href", "https://geez-text-reader.vercel.app/");
+  await expect(page.locator("#geeztype-converter")).toHaveAttribute("href", "https://geeztype-to-unicode.vercel.app/");
+  for (const id of ["#text-reader", "#geeztype-converter"]) await expect(page.locator(`${id} .tag-preview`)).toHaveText("Preview");
+  // Planned features: labelled, not linked.
+  const planned = page.locator("#planned").locator("xpath=ancestor::section").locator(".app-card");
+  await expect(planned).toHaveCount(2);
+  expect(await planned.locator("h3").allInnerTexts()).toEqual(["Type online", "Translation"]);
+  for (let i = 0; i < 2; i++) {
+    await expect(planned.nth(i).locator(".tag-preview")).toHaveText("Planned");
+    await expect(planned.nth(i).locator("a")).toHaveCount(0);
   }
   const external = (await mainLinks(page)).filter((h) => !h.startsWith(BASE) && !h.startsWith("mailto:"));
-  expect(external).toEqual([]); // no app, converter or translation links yet
-  expect(read("type.html")).not.toMatch(/vercel\.app|adsbygoogle|googlesyndication|keymanweb/i);
+  for (const h of external) expect(PREVIEW_TOOLS.has(new URL(h).host), h).toBe(true);
+  expect(read("type.html")).not.toMatch(/adsbygoogle|googlesyndication|keymanweb|translate\.googleapis|api\.openai/i);
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, "type-1440.png"), fullPage: true });
 });
 
@@ -133,4 +140,30 @@ test("Learn & Play Lissan card: approved wording, links only to the Lissan front
   // No deep links into individual Lissan lessons anywhere on the page.
   const lissan = (await page.locator("a").evaluateAll((as) => as.map((a) => a.href))).filter((h) => h.includes("lissan.geezword.com"));
   for (const h of lissan) expect(new URL(h).pathname, h).toBe("/");
+});
+
+test("All Apps describes the Desktop Keyboard as paid, never free", async ({ page }) => {
+  await quiet(page);
+  await page.goto(`${BASE}/apps`);
+  const card = page.locator('.app-card[href="downloads.html#keyboards"]');
+  await expect(card.locator(".tag-paid")).toHaveText("Paid");
+  await expect(card).not.toContainText(/free/i);
+  expect(read("apps.html")).not.toMatch(/Free offline keyboard/);
+});
+
+test("homepage discovery: Learn and Type doors, Lissan courses, reading, games, books, community", async ({ page }) => {
+  await quiet(page);
+  await page.goto(`${BASE}/#explore`);
+  await expect(page.locator("#door-learn a")).toHaveAttribute("href", "/learn");
+  await expect(page.locator("#door-type a")).toHaveAttribute("href", "/type");
+  await expect(page.locator("#door-play a")).toHaveAttribute("href", "/play");
+  await expect(page.locator("#door-read a")).toHaveAttribute("href", "/books");
+  const lissan = page.locator("#apps #lissan-card");
+  await expect(lissan).toHaveAttribute("href", "https://lissan.geezword.com/");
+  await expect(lissan).toContainText("Beginner courses in Amharic (12 lessons) and Tigrinya (8 lessons)");
+  await expect(page.locator("#apps #text-reader-card")).toHaveAttribute("href", "https://geez-text-reader.vercel.app/");
+  await expect(page.locator('#apps a[href="https://tracing.geezword.com"]')).toHaveCount(1); // alphabet
+  await expect(page.locator('#apps a[href="https://games.geezword.com"]')).toHaveCount(1);
+  await expect(page.locator("#books .book-card")).toHaveCount(2);
+  expect(await page.locator('a[href="/start#community"]').count()).toBeGreaterThanOrEqual(1);
 });

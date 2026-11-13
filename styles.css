@@ -1112,7 +1112,9 @@ img {
 }
 
 /* === Responsive === */
-@media (max-width: 768px) {
+/* Primary menu collapses behind the ☰ button on phones and portrait tablets
+   (seven items + search need more than 940px on one row). */
+@media (max-width: 940px) {
   .nav-links {
     display: none;
     position: absolute;
@@ -1142,6 +1144,9 @@ img {
   .nav-search input:focus {
     width: 180px;
   }
+}
+
+@media (max-width: 768px) {
 
   .search-results {
     min-width: 250px;
@@ -1594,22 +1599,15 @@ img {
   box-shadow: 0 0 0 2px var(--gz-indigo);
 }
 
-/* Six items + search: tighten spacing where the bar is narrowest */
-@media (min-width: 769px) and (max-width: 1100px) {
-  .nav-links {
-    gap: var(--gz-space-4);
-  }
-}
-
-/* Narrowest desktop widths: a shorter search box keeps the logo, the six
-   items and search on one row with clear space between them. */
-@media (min-width: 769px) {
+/* Seven items + search on one row from 941px: labels never wrap, and up to
+   1180px a tighter gap and shorter search box keep clear space around them. */
+@media (min-width: 941px) {
   .nav-links a {
     white-space: nowrap; /* "Learn & Play" and "Type & Translate" stay on one line */
   }
 }
 
-@media (min-width: 769px) and (max-width: 1023px) {
+@media (min-width: 941px) and (max-width: 1180px) {
   .navbar {
     padding: 0 var(--gz-space-4);
   }
@@ -1627,22 +1625,8 @@ img {
   }
 }
 
-@media (min-width: 769px) and (max-width: 880px) {
-  .nav-links {
-    gap: var(--gz-space-2);
-  }
-
-  .nav-links a.nav-join {
-    padding: var(--gz-space-2) var(--gz-space-3);
-  }
-
-  .nav-search input,
-  .nav-search input:focus {
-    width: 112px;
-  }
-}
-
-@media (max-width: 768px) {
+/* ☰ menu (≤940px): full-height 44px targets, side marker for the active item */
+@media (max-width: 940px) {
   .nav-links a {
     display: flex;
     align-items: center;

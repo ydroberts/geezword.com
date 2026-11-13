@@ -121,3 +121,16 @@ test("registration and backend files are untouched", async () => {
     expect(f, "must not change").not.toMatch(/^(functions\/|firestore\.|firebase\.json|\.firebaserc|start\.css|journey\.js|vercel\.json|\.vercelignore)/);
   }
 });
+
+test("Learn & Play Lissan card: approved wording, links only to the Lissan front page", async ({ page }) => {
+  await quiet(page);
+  await page.goto(`${BASE}/learn`);
+  const card = page.locator("#lissan-card");
+  await expect(card).toHaveAttribute("href", "https://lissan.geezword.com/");
+  await expect(card.locator("p").first()).toHaveText(
+    "Beginner courses in Amharic (12 lessons) and Tigrinya (8 lessons), with alphabet learning, everyday phrases, and AI conversation practice. Guest access available.");
+  await expect(card).toContainText("First Steps · Greetings & Introductions · Numbers & Counting");
+  // No deep links into individual Lissan lessons anywhere on the page.
+  const lissan = (await page.locator("a").evaluateAll((as) => as.map((a) => a.href))).filter((h) => h.includes("lissan.geezword.com"));
+  for (const h of lissan) expect(new URL(h).pathname, h).toBe("/");
+});

@@ -1,5 +1,5 @@
 // Browser tests for the six-item primary menu:
-//   Home | Learn & Play | Type & Translate | Books | Kidase | Community
+//   Home | Learn & Play | Type & Translate | Downloads | Books | Kidase | Community
 // Run through run-e2e.js. Nothing is submitted anywhere.
 "use strict";
 
@@ -14,16 +14,16 @@ const SITE_PORT = 5285;
 const BASE = `http://127.0.0.1:${SITE_PORT}`;
 const SHOTS = process.env.E2E_SCREENSHOT_DIR || "";
 
-const LABELS = ["Home", "Learn & Play", "Type & Translate", "Books", "Kidase", "Community"];
+const LABELS = ["Home", "Learn & Play", "Type & Translate", "Downloads", "Books", "Kidase", "Community"];
 const EXISTING = ["index", "about", "apps", "books", "challenge", "downloads", "play", "premium", "privacy", "start"];
 const PAGES = [...EXISTING, "learn", "type"];
-const HOME_HREFS = ["#home", "learn.html", "type.html", "books.html", "#kidase", "#community"];
-const PAGE_HREFS = ["index.html", "learn.html", "type.html", "books.html", "index.html#kidase", "start.html"];
+const HOME_HREFS = ["#home", "learn.html", "type.html", "downloads.html", "books.html", "#kidase", "#community"];
+const PAGE_HREFS = ["index.html", "learn.html", "type.html", "downloads.html", "books.html", "index.html#kidase", "start.html"];
 // Page → [highlighted menu item, aria-current]. A page marks its own item
 // "page"; a page inside a section marks that section "true".
 const CURRENT = {
   learn: ["Learn & Play", "page"], play: ["Learn & Play", "true"], challenge: ["Learn & Play", "true"],
-  type: ["Type & Translate", "page"], downloads: ["Type & Translate", "true"],
+  type: ["Type & Translate", "page"], downloads: ["Downloads", "page"],
   books: ["Books", "page"], premium: ["Kidase", "true"], start: ["Community", "page"],
 };
 
@@ -55,7 +55,7 @@ async function settle(page) {
 
 // ---- Markup on every page ----
 for (const name of PAGES) {
-  test(`/${name}: six menu items, in order, with the right destinations`, async ({ page }) => {
+  test(`/${name}: seven menu items, in order, with the right destinations`, async ({ page }) => {
     await quiet(page);
     await page.goto(url(name));
     const links = page.locator(".navbar .nav-links a");
@@ -67,7 +67,7 @@ for (const name of PAGES) {
     const bg = await page.locator(".navbar .nav-links a.nav-join").evaluate((a) => getComputedStyle(a).backgroundColor);
     expect(bg).not.toBe("rgba(0, 0, 0, 0)");
     // Superseded items are not in the header.
-    for (const gone of ["Apps", "Keyboard", "Downloads", "About", "Teach", "Start", "Keyboards"]) {
+    for (const gone of ["Apps", "Keyboard", "About", "Teach", "Start", "Keyboards"]) {
       await expect(menuLink(page, gone)).toHaveCount(0);
     }
     await expect(page.locator(".navbar #searchInput")).toHaveCount(1);
@@ -80,7 +80,12 @@ for (const name of PAGES) {
 }
 
 test("existing pages changed only in the header menu; footers untouched", async () => {
+  const CONTENT_CHANGED = new Set(["index", "apps"]); // homepage discovery + All Apps keyboard wording (la-release.spec.js)
   for (const name of EXISTING) {
+    if (CONTENT_CHANGED.has(name)) {
+      expect(read(name + ".html").match(FOOTER)[0], name + ".html footer").toBe(onMaster(name + ".html").match(FOOTER)[0]);
+      continue;
+    }
     const file = `${name}.html`;
     const now = read(file), before = onMaster(file);
     expect(now.match(FOOTER)[0], `${file} footer`).toBe(before.match(FOOTER)[0]);
@@ -104,6 +109,7 @@ const TARGETS = [
   { label: "Home", path: /^\/(index(\.html)?)?$/, check: "#home" },
   { label: "Learn & Play", path: /^\/learn(\.html)?$/, check: ".hero h1", text: "Learn & Play" },
   { label: "Type & Translate", path: /^\/type(\.html)?$/, check: ".hero h1", text: "Type & Translate" },
+  { label: "Downloads", path: /^\/downloads(\.html)?$/, check: ".hero h1", text: "Keyboards & Fonts" },
   { label: "Books", path: /^\/books(\.html)?$/, check: ".hero h1", text: "Books" },
   { label: "Kidase", path: /^\/(index(\.html)?)?$/, hash: "#kidase", check: "#kidase", inView: true },
   { label: "Community", path: /^\/start(\.html)?$/, check: "#community-form" },
@@ -164,7 +170,7 @@ test("apps catalog and downloads links are all still on their pages", async ({ p
 });
 
 // ---- Desktop fit ----
-for (const width of [769, 800, 880, 881, 960, 1023, 1024, 1100, 1280, 1440]) {
+for (const width of [941, 960, 1024, 1100, 1180, 1181, 1280, 1440]) {
   test(`desktop ${width}px: one row, no overlap with the logo or search, no horizontal scroll`, async ({ page }) => {
     await quiet(page);
     await page.setViewportSize({ width, height: 800 });
@@ -209,13 +215,13 @@ for (const width of [769, 800, 880, 881, 960, 1023, 1024, 1100, 1280, 1440]) {
   });
 }
 
-test("desktop: Tab moves through the six items in order with a visible focus ring", async ({ page }) => {
+test("desktop: Tab moves through the seven items in order with a visible focus ring", async ({ page }) => {
   await quiet(page);
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(`${BASE}/about`);
   await page.locator(".nav-logo").focus();
   const seen = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < LABELS.length; i++) {
     await page.keyboard.press("Tab");
     seen.push(await page.evaluate(() => {
       const a = document.activeElement, cs = getComputedStyle(a);
@@ -229,8 +235,9 @@ test("desktop: Tab moves through the six items in order with a visible focus rin
 });
 
 // ---- Mobile ----
-for (const [w, h] of [[390, 844], [320, 568]]) {
-  test(`mobile ${w}x${h}: toggle opens an accessible menu; items are 44px targets; choosing one closes it`, async ({ page }) => {
+// Phones and portrait tablets (940px and below) use the menu button.
+for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [820, 1180], [940, 800]]) {
+  test(`mobile/tablet ${w}x${h}: toggle opens an accessible menu; items are 44px targets; choosing one closes it`, async ({ page }) => {
     await quiet(page);
     await page.setViewportSize({ width: w, height: h });
     for (const name of ["index", "learn", "type"]) {

@@ -1603,7 +1603,13 @@ img {
 
 /* Narrowest desktop widths: a shorter search box keeps the logo, the six
    items and search on one row with clear space between them. */
-@media (min-width: 769px) and (max-width: 960px) {
+@media (min-width: 769px) {
+  .nav-links a {
+    white-space: nowrap; /* "Learn & Play" and "Type & Translate" stay on one line */
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1023px) {
   .navbar {
     padding: 0 var(--gz-space-4);
   }
@@ -1618,6 +1624,21 @@ img {
 
   .nav-search input:focus {
     width: 160px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 880px) {
+  .nav-links {
+    gap: var(--gz-space-2);
+  }
+
+  .nav-links a.nav-join {
+    padding: var(--gz-space-2) var(--gz-space-3);
+  }
+
+  .nav-search input,
+  .nav-search input:focus {
+    width: 112px;
   }
 }
 

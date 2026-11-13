@@ -1,5 +1,5 @@
 // Browser tests for the six-item primary menu:
-//   Home | Apps | Keyboard | Downloads | Kidase | Community
+//   Home | Learn & Play | Type & Translate | Books | Kidase | Community
 // Run through run-e2e.js. Nothing is submitted anywhere.
 "use strict";
 
@@ -14,12 +14,18 @@ const SITE_PORT = 5285;
 const BASE = `http://127.0.0.1:${SITE_PORT}`;
 const SHOTS = process.env.E2E_SCREENSHOT_DIR || "";
 
-const LABELS = ["Home", "Apps", "Keyboard", "Downloads", "Kidase", "Community"];
-const PAGES = ["index", "about", "apps", "books", "challenge", "downloads", "play", "premium", "privacy", "start"];
-const HOME_HREFS = ["#home", "apps.html", "downloads.html#keyboards", "downloads.html", "#kidase", "#community"];
-const PAGE_HREFS = ["index.html", "apps.html", "downloads.html#keyboards", "downloads.html", "index.html#kidase", "start.html"];
-// Page → the menu item it marks as the current page (others mark none).
-const CURRENT = { apps: "Apps", downloads: "Downloads", start: "Community" };
+const LABELS = ["Home", "Learn & Play", "Type & Translate", "Books", "Kidase", "Community"];
+const EXISTING = ["index", "about", "apps", "books", "challenge", "downloads", "play", "premium", "privacy", "start"];
+const PAGES = [...EXISTING, "learn", "type"];
+const HOME_HREFS = ["#home", "learn.html", "type.html", "books.html", "#kidase", "#community"];
+const PAGE_HREFS = ["index.html", "learn.html", "type.html", "books.html", "index.html#kidase", "start.html"];
+// Page → [highlighted menu item, aria-current]. A page marks its own item
+// "page"; a page inside a section marks that section "true".
+const CURRENT = {
+  learn: ["Learn & Play", "page"], play: ["Learn & Play", "true"], challenge: ["Learn & Play", "true"],
+  type: ["Type & Translate", "page"], downloads: ["Type & Translate", "true"],
+  books: ["Books", "page"], premium: ["Kidase", "true"], start: ["Community", "page"],
+};
 
 let server;
 test.beforeAll(async () => { server = await start(SITE_PORT); });
@@ -30,6 +36,8 @@ const onMaster = (file) =>
   execFileSync("git", ["show", `origin/master:${file}`], { cwd: REPO_ROOT, encoding: "utf8" }).replace(/\r/g, "");
 const NAV_UL = /(?:[ \t]*<!--[^\n]*-->\n)?[ \t]*<ul class="nav-links[^"]*">[\s\S]*?<\/ul>/;
 const FOOTER = /<footer[\s\S]*?<\/footer>/;
+const url = (name) => `${BASE}/${name === "index" ? "" : name}`;
+const menuLink = (page, label) => page.locator(".navbar .nav-links a").filter({ hasText: new RegExp(`^${label}$`) });
 
 // Blocks out non-essential third-party requests (ads, analytics, Firestore).
 async function quiet(page) {
@@ -49,29 +57,30 @@ async function settle(page) {
 for (const name of PAGES) {
   test(`/${name}: six menu items, in order, with the right destinations`, async ({ page }) => {
     await quiet(page);
-    await page.goto(`${BASE}/${name === "index" ? "" : name}`);
+    await page.goto(url(name));
     const links = page.locator(".navbar .nav-links a");
     expect(await links.allInnerTexts()).toEqual(LABELS);
     const hrefs = await links.evaluateAll((as) => as.map((a) => a.getAttribute("href")));
     expect(hrefs).toEqual(name === "index" ? HOME_HREFS : PAGE_HREFS);
-    // Community keeps its gold (saffron) highlight and is the only highlighted pill.
+    // Community keeps its gold (saffron) highlight and is the only pill.
     await expect(page.locator(".navbar .nav-links a.nav-join")).toHaveText("Community");
     const bg = await page.locator(".navbar .nav-links a.nav-join").evaluate((a) => getComputedStyle(a).backgroundColor);
     expect(bg).not.toBe("rgba(0, 0, 0, 0)");
-    // Removed from the header; still available in the footer.
-    for (const gone of ["Books", "About", "Teach", "Learn & Play", "Start", "Keyboards"]) {
-      await expect(page.locator(".navbar .nav-links a", { hasText: new RegExp(`^${gone}$`) })).toHaveCount(0);
+    // Superseded items are not in the header.
+    for (const gone of ["Apps", "Keyboard", "Downloads", "About", "Teach", "Start", "Keyboards"]) {
+      await expect(menuLink(page, gone)).toHaveCount(0);
     }
-    // Search stays in the header.
     await expect(page.locator(".navbar #searchInput")).toHaveCount(1);
-    // Active-page indicator.
-    const current = await page.locator('.navbar .nav-links a[aria-current="page"]').allInnerTexts();
-    expect(current).toEqual(CURRENT[name] ? [CURRENT[name]] : []);
+    // Active-page indicator (homepage: scroll-spy, checked separately).
+    if (name !== "index") {
+      const lit = await page.locator(".navbar .nav-links a.active").evaluateAll((as) => as.map((a) => [a.textContent.trim(), a.getAttribute("aria-current")]));
+      expect(lit).toEqual(CURRENT[name] ? [CURRENT[name]] : []);
+    }
   });
 }
 
-test("only the header menu changed: every page is identical to master apart from it, footers included", async () => {
-  for (const name of PAGES) {
+test("existing pages changed only in the header menu; footers untouched", async () => {
+  for (const name of EXISTING) {
     const file = `${name}.html`;
     const now = read(file), before = onMaster(file);
     expect(now.match(FOOTER)[0], `${file} footer`).toBe(before.match(FOOTER)[0]);
@@ -79,10 +88,10 @@ test("only the header menu changed: every page is identical to master apart from
   }
 });
 
-test("footer keeps Books and About; Books reaches GeezAlphabet.com", async ({ page }) => {
+test("footer keeps Books and About on every page; Books reaches GeezAlphabet.com", async ({ page }) => {
   await quiet(page);
   for (const name of PAGES) {
-    await page.goto(`${BASE}/${name === "index" ? "" : name}`);
+    await page.goto(url(name));
     await expect(page.locator('footer a[href="books.html"]')).toHaveText("Books");
     await expect(page.locator('footer a[href="about.html"]')).toHaveText("About");
   }
@@ -93,9 +102,9 @@ test("footer keeps Books and About; Books reaches GeezAlphabet.com", async ({ pa
 // ---- Every menu item navigates correctly ----
 const TARGETS = [
   { label: "Home", path: /^\/(index(\.html)?)?$/, check: "#home" },
-  { label: "Apps", path: /^\/apps(\.html)?$/, check: "main h1, .hero h1", text: "Apps" },
-  { label: "Keyboard", path: /^\/downloads(\.html)?$/, hash: "#keyboards", check: "#keyboards", inView: true },
-  { label: "Downloads", path: /^\/downloads(\.html)?$/, check: ".hero h1", text: "Keyboards & Fonts" },
+  { label: "Learn & Play", path: /^\/learn(\.html)?$/, check: ".hero h1", text: "Learn & Play" },
+  { label: "Type & Translate", path: /^\/type(\.html)?$/, check: ".hero h1", text: "Type & Translate" },
+  { label: "Books", path: /^\/books(\.html)?$/, check: ".hero h1", text: "Books" },
   { label: "Kidase", path: /^\/(index(\.html)?)?$/, hash: "#kidase", check: "#kidase", inView: true },
   { label: "Community", path: /^\/start(\.html)?$/, check: "#community-form" },
 ];
@@ -103,11 +112,8 @@ for (const t of TARGETS) {
   test(`clicking "${t.label}" from /about lands on its destination`, async ({ page }) => {
     await quiet(page);
     await page.goto(`${BASE}/about`);
-    await page.locator(".navbar .nav-links a", { hasText: new RegExp(`^${t.label}$`) }).click();
+    await menuLink(page, t.label).click();
     await page.waitForURL((u) => t.path.test(u.pathname) && u.hash === (t.hash || ""), { waitUntil: "load" });
-    const url = new URL(page.url());
-    expect(url.pathname).toMatch(t.path);
-    if (t.hash) expect(url.hash).toBe(t.hash);
     const target = page.locator(t.check).first();
     await expect(target).toHaveCount(1);
     if (t.text) await expect(target).toHaveText(t.text);
@@ -129,57 +135,20 @@ test("homepage: Home is lit at the top; Kidase and Community light when scrolled
   const lit = () => page.locator('.navbar .nav-links a[aria-current]').allInnerTexts();
   expect(await lit()).toEqual(["Home"]);
   for (const [label, id] of [["Kidase", "#kidase"], ["Community", "#community"]]) {
-    await page.locator(".navbar .nav-links a", { hasText: new RegExp(`^${label}$`) }).click();
+    await menuLink(page, label).click();
     await settle(page);
     expect(await lit()).toEqual([label]);
     expect(new URL(page.url()).hash).toBe(id);
   }
-  // Apps leaves the homepage for the full catalog.
-  await page.locator(".navbar .nav-links a", { hasText: /^Apps$/ }).click();
-  await expect(page).toHaveURL(/\/apps(\.html)?$/);
-});
-
-// Keyboard and Downloads share a page; the highlight must follow what was clicked.
-test("Keyboard lights Keyboard, Downloads lights Downloads — never the other", async ({ page }) => {
-  await quiet(page);
-  const lit = () => page.locator(".navbar .nav-links a.active").allInnerTexts();
-  const current = () => page.locator('.navbar .nav-links a[aria-current="page"]').allInnerTexts();
-  for (const [w, h] of [[1280, 800], [390, 844]]) {
-    await page.setViewportSize({ width: w, height: h });
-    const click = async (label) => {
-      if (w < 769) await page.locator(".nav-toggle").click();
-      await page.locator(".navbar .nav-links a", { hasText: new RegExp(`^${label}$`) }).click();
-    };
-    // From another page.
-    await page.goto(`${BASE}/`);
-    await click("Keyboard");
-    await page.waitForURL(/downloads(\.html)?#keyboards$/, { waitUntil: "load" });
-    expect(await lit(), `${w}: after Keyboard`).toEqual(["Keyboard"]);
-    expect(await current()).toEqual(["Keyboard"]);
-    await page.goto(`${BASE}/`);
-    await click("Downloads");
-    await page.waitForURL(/downloads(\.html)?$/, { waitUntil: "load" });
-    expect(await lit(), `${w}: after Downloads`).toEqual(["Downloads"]);
-    expect(await current()).toEqual(["Downloads"]);
-    // Already on /downloads: Keyboard is an in-page jump (hashchange), then back.
-    await click("Keyboard");
-    await expect(page).toHaveURL(/#keyboards$/);
-    await expect.poll(lit).toEqual(["Keyboard"]);
-    await click("Downloads");
-    await page.waitForURL(/downloads(\.html)?$/, { waitUntil: "load" });
-    expect(await lit(), `${w}: back to Downloads`).toEqual(["Downloads"]);
-    // Opened directly from a link or bookmark.
-    await page.goto(`${BASE}/downloads#keyboards`);
-    expect(await lit()).toEqual(["Keyboard"]);
-  }
+  await menuLink(page, "Learn & Play").click();
+  await expect(page).toHaveURL(/\/learn(\.html)?$/);
 });
 
 test("every menu destination returns 200 and every in-page target exists", async ({ request }) => {
-  for (const p of ["/", "/index.html", "/apps.html", "/downloads.html", "/start.html", "/apps", "/downloads", "/start"]) {
+  for (const p of ["/", "/learn", "/learn.html", "/type", "/type.html", "/books", "/books.html", "/start", "/start.html"]) {
     expect((await request.get(`${BASE}${p}`)).status(), p).toBe(200);
   }
-  expect(read("downloads.html")).toMatch(/id="keyboards"/);
-  for (const id of ["home", "kidase", "community"]) expect(read("index.html")).toMatch(new RegExp(`id="${id}"`));
+  for (const id of ["home", "kidase", "community", "explore"]) expect(read("index.html")).toMatch(new RegExp(`id="${id}"`));
 });
 
 test("apps catalog and downloads links are all still on their pages", async ({ page }) => {
@@ -195,12 +164,12 @@ test("apps catalog and downloads links are all still on their pages", async ({ p
 });
 
 // ---- Desktop fit ----
-for (const width of [769, 800, 900, 960, 961, 1024, 1100, 1280, 1440]) {
+for (const width of [769, 800, 880, 881, 960, 1023, 1024, 1100, 1280, 1440]) {
   test(`desktop ${width}px: one row, no overlap with the logo or search, no horizontal scroll`, async ({ page }) => {
     await quiet(page);
     await page.setViewportSize({ width, height: 800 });
-    for (const name of ["index", "apps", "about"]) {
-      await page.goto(`${BASE}/${name === "index" ? "" : name}`);
+    for (const name of ["index", "learn", "about"]) {
+      await page.goto(url(name));
       const m = await page.evaluate(() => {
         const r = (s) => document.querySelector(s).getBoundingClientRect();
         const items = [...document.querySelectorAll(".navbar .nav-links a")].map((a) => a.getBoundingClientRect());
@@ -227,15 +196,15 @@ for (const width of [769, 800, 900, 960, 961, 1024, 1100, 1280, 1440]) {
         const r = (s) => document.querySelector(s).getBoundingClientRect();
         return { menu: r(".navbar .nav-links"), logo: r(".nav-logo"), search: r(".nav-search"), scrollW: document.documentElement.scrollWidth, innerW: innerWidth };
       });
-      expect(f.menu.left, `${name}: focused, menu clear of logo`).toBeGreaterThanOrEqual(f.logo.right + 4);
-      expect(f.search.left, `${name}: focused, search clear of menu`).toBeGreaterThanOrEqual(f.menu.right + 4);
+      expect(f.menu.left, `${name}: focused, menu clear of logo`).toBeGreaterThanOrEqual(f.logo.right + 8);
+      expect(f.search.left, `${name}: focused, search clear of menu`).toBeGreaterThanOrEqual(f.menu.right + 8);
       expect(f.scrollW, `${name}: focused, no horizontal scroll`).toBeLessThanOrEqual(f.innerW);
     }
     if (SHOTS) {
       await page.goto(`${BASE}/`);
       await page.screenshot({ path: path.join(SHOTS, `nav-home-${width}.png`), clip: { x: 0, y: 0, width, height: 80 } });
-      await page.goto(`${BASE}/apps`);
-      await page.screenshot({ path: path.join(SHOTS, `nav-apps-${width}.png`), clip: { x: 0, y: 0, width, height: 80 } });
+      await page.goto(`${BASE}/learn`);
+      await page.screenshot({ path: path.join(SHOTS, `nav-learn-${width}.png`), clip: { x: 0, y: 0, width, height: 80 } });
     }
   });
 }
@@ -264,8 +233,8 @@ for (const [w, h] of [[390, 844], [320, 568]]) {
   test(`mobile ${w}x${h}: toggle opens an accessible menu; items are 44px targets; choosing one closes it`, async ({ page }) => {
     await quiet(page);
     await page.setViewportSize({ width: w, height: h });
-    for (const name of ["index", "apps"]) {
-      await page.goto(`${BASE}/${name === "index" ? "" : name}`);
+    for (const name of ["index", "learn", "type"]) {
+      await page.goto(url(name));
       const toggle = page.locator(".nav-toggle");
       const menu = page.locator(".navbar .nav-links");
       await expect(toggle).toBeVisible();
@@ -296,12 +265,13 @@ for (const [w, h] of [[390, 844], [320, 568]]) {
     // Choosing an item navigates and the menu is closed on arrival.
     await page.goto(`${BASE}/about`);
     await page.locator(".nav-toggle").click();
-    await page.locator(".navbar .nav-links a", { hasText: /^Downloads$/ }).click();
-    await expect(page).toHaveURL(/\/downloads(\.html)?$/);
+    await menuLink(page, "Type & Translate").click();
+    await expect(page).toHaveURL(/\/type(\.html)?$/);
     await expect(page.locator(".navbar .nav-links")).toBeHidden();
-    // Same-page item (Keyboard on /downloads) closes the menu too.
+    // An in-page item (Kidase on the homepage) closes the menu too.
+    await page.goto(`${BASE}/`);
     await page.locator(".nav-toggle").click();
-    await page.locator(".navbar .nav-links a", { hasText: /^Keyboard$/ }).click();
+    await menuLink(page, "Kidase").click();
     await expect(page.locator(".navbar .nav-links")).toBeHidden();
     await expect(page.locator(".nav-toggle")).toHaveAttribute("aria-expanded", "false");
   });
@@ -314,13 +284,12 @@ test("header search still finds apps", async ({ page }) => {
   await expect(page.locator("#searchResults")).toContainText("Kidase");
 });
 
-// Inner-page headers line up with the logo and content on every screen width
-// (on very wide screens they used to sit at the far-left edge).
+// Inner-page headers line up with the logo and content on every screen width.
 for (const width of [390, 1280, 1440, 1920, 2552]) {
-  test(`page headers align with the logo at ${width}px (apps, books, downloads)`, async ({ page }) => {
+  test(`page headers align with the logo at ${width}px`, async ({ page }) => {
     await quiet(page);
     await page.setViewportSize({ width, height: 900 });
-    for (const name of ["apps", "books", "downloads"]) {
+    for (const name of ["apps", "books", "downloads", "learn", "type"]) {
       await page.goto(`${BASE}/${name}`);
       const m = await page.evaluate(() => {
         const L = (s) => document.querySelector(s).getBoundingClientRect().left;
@@ -331,7 +300,6 @@ for (const width of [390, 1280, 1440, 1920, 2552]) {
       expect(Math.abs(m.h1 - m.content), `${name}: heading vs content`).toBeLessThanOrEqual(2);
       expect(m.pWidth, `${name}: intro keeps its line length`).toBeLessThanOrEqual(640);
       expect(m.scrollW).toBeLessThanOrEqual(m.innerW);
-      if (SHOTS && width === 2552 && name === "downloads") await page.screenshot({ path: path.join(SHOTS, "downloads-2552.png") });
     }
   });
 }

@@ -172,7 +172,7 @@ test("no homepage link carries the ignored ?interest= parameter; Teach updates g
 
 test("homepage uses the six-item primary menu (full checks in navigation.spec.js)", async ({ page }) => {
   await openHome(page);
-  expect(await page.locator(".nav-links a").allInnerTexts()).toEqual(["Home", "Apps", "Keyboard", "Downloads", "Kidase", "Community"]);
+  expect(await page.locator(".nav-links a").allInnerTexts()).toEqual(["Home", "Learn & Play", "Type & Translate", "Books", "Kidase", "Community"]);
   // Sections that left the menu are still on the page.
   for (const id of ["#apps", "#teach", "#books"]) await expect(page.locator(id)).toHaveCount(1);
 });

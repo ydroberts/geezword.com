@@ -4,16 +4,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLinks = document.querySelector('.nav-links');
 
   if (toggle && navLinks) {
+    // Expose the open/closed state to assistive technology.
+    if (!navLinks.id) navLinks.id = 'primary-menu';
+    toggle.setAttribute('aria-controls', navLinks.id);
+    const navEl = navLinks.closest('nav');
+    if (navEl && !navEl.hasAttribute('aria-label')) navEl.setAttribute('aria-label', 'Primary');
+
+    const setOpen = open => {
+      navLinks.classList.toggle('open', open);
+      toggle.textContent = open ? '\u2715' : '\u2630';
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    setOpen(false);
+
     toggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
-      toggle.textContent = navLinks.classList.contains('open') ? '\u2715' : '\u2630';
+      setOpen(!navLinks.classList.contains('open'));
     });
 
     navLinks.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        navLinks.classList.remove('open');
-        toggle.textContent = '\u2630';
-      });
+      link.addEventListener('click', () => setOpen(false));
+    });
+
+    // Escape closes the open mobile menu and returns focus to its button.
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+        setOpen(false);
+        toggle.focus();
+      }
     });
   }
 
@@ -27,6 +44,29 @@ document.addEventListener('DOMContentLoaded', () => {
         link.classList.add('active');
       }
     });
+  }
+
+  // A menu item can point at a section of the current page (Keyboard →
+  // downloads.html#keyboards on /downloads). Light that item when the address
+  // names its section, and the page's own item (Downloads) otherwise.
+  const pageItem = document.querySelector('.nav-links a[aria-current="page"]');
+  if (pageItem) {
+    const pageHref = pageItem.getAttribute('href');
+    const hashItems = [...document.querySelectorAll('.nav-links a')]
+      .filter(a => a.getAttribute('href').startsWith(pageHref + '#'));
+    if (hashItems.length) {
+      const syncHashItem = () => {
+        const hit = hashItems.find(a => a.getAttribute('href').slice(pageHref.length) === window.location.hash);
+        const on = hit || pageItem;
+        [pageItem, ...hashItems].forEach(a => {
+          a.classList.toggle('active', a === on);
+          if (a === on) a.setAttribute('aria-current', 'page');
+          else a.removeAttribute('aria-current');
+        });
+      };
+      syncHashItem();
+      window.addEventListener('hashchange', syncHashItem);
+    }
   }
 
   // === Homepage section highlight (scroll-spy) ===
@@ -230,5 +270,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!target) return;
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     target.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+
+    // A font swap can resize content above the target while that scroll runs
+    // and leave it a little off. Snap it into place (no animation) if so:
+    // once the scroll has finished, and on layout changes for one more second.
+    const snap = () => {
+      if (visitorMoved) return;
+      const want = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+      const top = target.getBoundingClientRect().top;
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 1;
+      if (Math.abs(top - want) > 2 && !(atBottom && top > want)) {
+        target.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
+    };
+    if ('onscrollend' in window) window.addEventListener('scrollend', snap, { once: true });
+    setTimeout(snap, 1200);
+    if (typeof ResizeObserver !== 'function') return;
+    let first = true; // observe() reports the current size once; that is not a change
+    const realign = new ResizeObserver(() => {
+      if (first) { first = false; return; }
+      snap();
+    });
+    realign.observe(document.body);
+    setTimeout(() => realign.disconnect(), 1000);
   });
 })();

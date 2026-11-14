@@ -120,7 +120,7 @@ async function settled(email, { signupCount } = {}) {
   return readMember(email);
 }
 
-async function signup(email, { formVersion, interests, firstName = "Test", language = "en" }) {
+async function signup(email, { formVersion, interests, firstName = "Test", language = "en", campaign = {} }) {
   await db.collection("community-signups").add({
     firstName,
     email,
@@ -128,9 +128,15 @@ async function signup(email, { formVersion, interests, firstName = "Test", langu
     interests,
     source: "start-page",
     formVersion,
+    ...campaign, // utmSource / utmMedium / utmCampaign, as the form sends them
     createdAt: FieldValue.serverTimestamp(),
   });
 }
+
+// The owner notification email (mock Resend /emails request) for this address.
+const notificationFor = (email) =>
+  waitFor(() => requests.find((r) => r.path.startsWith("/emails") && r.body && typeof r.body.text === "string"
+    && r.body.text.includes(email)), `notification email for ${email}`);
 
 // Topics included in Resend requests for this email after request #afterSeq.
 function topicsSentAfter(email, afterSeq) {
@@ -375,3 +381,31 @@ test("duplicate webhook deliveries are idempotent; bad signatures are rejected",
   );
   assert.equal(forged.status, 400);
 });
+
+// ---------------------------------------------------------------------------
+// Owner notification: campaign line (Option A). The member schema and the
+// Resend contact sync are unchanged by it.
+// ---------------------------------------------------------------------------
+const MEMBER_CAMPAIGN_FIELDS = ["utmSource", "utmMedium", "utmCampaign", "campaign", "firstCampaign", "lastCampaign"];
+
+for (const [label, campaign, expected] of [
+  ["LA QR code", { utmSource: "qr", utmMedium: "print", utmCampaign: "la-book-signing-2026" }, "la-book-signing-2026"],
+  ["another campaign", { utmSource: "facebook", utmMedium: "social", utmCampaign: "dallas-festival-2027" }, "dallas-festival-2027"],
+  ["no campaign", {}, "(none)"],
+]) {
+  test(`owner notification shows the campaign: ${label}`, async () => {
+    const email = uniqueEmail("notify");
+    await signup(email, { formVersion: 3, interests: ["general"], campaign });
+    const note = await notificationFor(email);
+    const campaignLine = note.body.text.split("\n").find((l) => l.startsWith("Campaign:"));
+    assert.equal(campaignLine, `Campaign:  ${expected}`);
+    assert.ok(note.body.html.includes(`>${expected}</td>`), "HTML row shows the campaign");
+    // Member record and Resend contact sync are unchanged by the campaign.
+    const member = await settled(email, { signupCount: 1 });
+    for (const f of MEMBER_CAMPAIGN_FIELDS) assert.equal(member[f], undefined, `member has no ${f}`);
+    assert.ok(contactRequests(email).length >= 1, "contact still synced to Resend");
+    for (const r of contactRequests(email)) {
+      for (const f of MEMBER_CAMPAIGN_FIELDS) assert.equal(r.body[f], undefined, `Resend contact has no ${f}`);
+    }
+  });
+}

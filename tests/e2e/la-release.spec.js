@@ -124,9 +124,17 @@ test("registration and backend files are untouched", async () => {
   const untracked = execFileSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: REPO_ROOT, encoding: "utf8" })
     .split("\n").filter(Boolean);
   const all = [...changed, ...untracked];
+  // Approved 2026-11-13 (Option A): the owner notification may show the
+  // campaign, and its emulator tests may cover that. Nothing else in functions/.
+  const ALLOWED = new Set(["functions/index.js", "functions/test/member-sync.test.js"]);
   for (const f of all) {
+    if (ALLOWED.has(f)) continue;
     expect(f, "must not change").not.toMatch(/^(functions\/|firestore\.|firebase\.json|\.firebaserc|start\.css|journey\.js|vercel\.json|\.vercelignore)/);
   }
+  // functions/index.js: only campaign lines (or their comments) may differ.
+  const diff = execFileSync("git", ["diff", "-U0", "origin/master", "--", "functions/index.js"], { cwd: REPO_ROOT, encoding: "utf8" });
+  const edits = diff.split("\n").filter((l) => /^[+-](?![+-])/.test(l)).map((l) => l.slice(1).trim());
+  for (const l of edits) expect(/ampaign/.test(l) || l.startsWith("//"), `unexpected functions/index.js change: ${l}`).toBe(true);
 });
 
 test("Learn & Play Lissan card: approved wording, links only to the Lissan front page", async ({ page }) => {

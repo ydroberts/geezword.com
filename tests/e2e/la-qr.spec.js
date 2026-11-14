@@ -155,3 +155,63 @@ test.afterAll(() => {
   // Across every /la test: nothing reached production Firestore or Mailchimp.
   expect(prodRequests).toEqual([]);
 });
+
+// ---------------------------------------------------------------------------
+// LA registration link under "What would you like to do?" (approved 2026-11-13)
+// ---------------------------------------------------------------------------
+for (const [w, h] of [[390, 844], [320, 568], [1440, 900]]) {
+  test(`${w}x${h}: after /la the "Join the Free Geezword Community" link is on screen without scrolling`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto(`${BASE}/la`, { waitUntil: "load" });
+    await scrollSettled(page);
+    const r = await page.evaluate(() => {
+      const nav = document.querySelector(".navbar").getBoundingClientRect().bottom;
+      const a = document.querySelector("#explore-join").getBoundingClientRect();
+      return { top: a.top, bottom: a.bottom, nav, vh: innerHeight, hash: location.hash };
+    });
+    expect(r.hash).toBe("#explore");
+    expect(r.top).toBeGreaterThanOrEqual(r.nav);
+    expect(r.bottom).toBeLessThanOrEqual(r.vh);
+  });
+}
+
+test("clicking the join link after /la keeps the LA campaign and the registration carries it (emulator)", async ({ page }) => {
+  test.skip(!EMULATOR_PORT, "needs the Firestore emulator (npm test)");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/la`, { waitUntil: "load" });
+  await page.locator("#explore-join").click();
+  await page.waitForURL(/\/start#community$/);
+  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem("geezword-start-campaign")))).toEqual(CAMPAIGN);
+  // Same tab; only the emulator switch is added before submitting.
+  const email = `la.join.${Date.now()}@example.test`;
+  await page.goto(`${BASE}/start?firestoreEmulator=${EMULATOR_PORT}#community`);
+  const form = page.locator("#community-form");
+  await form.locator('input[name="firstName"]').fill("Selam");
+  await form.locator('input[name="email"]').fill(email);
+  await form.locator("label.lang-radio").filter({ has: page.locator('input[value="ti"]') }).click();
+  await page.locator("#join-free-button").click();
+  await expect(page.locator("#community-success")).toBeVisible({ timeout: 20_000 });
+  const url = `http://${EMULATOR_HOST}/v1/projects/${PROJECT_ID}/databases/(default)/documents/community-signups?pageSize=300`;
+  const body = await (await fetch(url, { headers: { Authorization: "Bearer owner" } })).json();
+  const doc = (body.documents || []).map((d) => d.fields).find((f) => f.email?.stringValue === email);
+  expect(doc, "registration written to the emulator").toBeTruthy();
+  expect({ utmSource: doc.utmSource?.stringValue, utmMedium: doc.utmMedium?.stringValue, utmCampaign: doc.utmCampaign?.stringValue }).toEqual(CAMPAIGN);
+  expect(doc.preferredEmailLanguage.stringValue).toBe("ti");
+  expect(Number(doc.formVersion.integerValue)).toBe(3);
+});
+
+test("other campaign sources still work: a different tagged link replaces the stored campaign", async ({ page }) => {
+  await page.goto(`${BASE}/la`, { waitUntil: "load" });
+  await page.goto(`${BASE}/?utm_source=facebook&utm_medium=social&utm_campaign=dallas-festival-2027#explore`, { waitUntil: "load" });
+  await page.locator("#explore-join").click();
+  await page.waitForURL(/\/start#community$/);
+  expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem("geezword-start-campaign"))))
+    .toEqual({ utmSource: "facebook", utmMedium: "social", utmCampaign: "dallas-festival-2027" });
+});
+
+test("untagged visit: the join link adds no campaign", async ({ page }) => {
+  await page.goto(`${BASE}/`, { waitUntil: "load" });
+  await page.locator("#explore-join").click();
+  await page.waitForURL(/\/start#community$/);
+  expect(await page.evaluate(() => sessionStorage.getItem("geezword-start-campaign"))).toBeNull();
+});

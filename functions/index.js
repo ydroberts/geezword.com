@@ -147,6 +147,9 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
       : "(none selected)";
 
     const source    = (data.source || "(unknown)").toString();
+    // Campaign tag carried from a tagged link (e.g. the LA QR code). The
+    // Firestore rules already restrict it to [a-z0-9._-], max 50 characters.
+    const campaign  = (data.utmCampaign || "").toString() || "(none)";
 
     // New registration vs. update: is this email already in the collection?
     // The just-created doc is included in the query, so size > 1 means a
@@ -195,6 +198,7 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
       `Language:  ${language}\n` +
       `Interests: ${interests}\n` +
       `Source:    ${source}\n` +
+      `Campaign:  ${campaign}\n` +
       `Signed up: ${createdAtUser} (${createdAtIso})\n\n` +
       `View all signups in the Firebase Console:\n` +
       `https://console.firebase.google.com/project/geezword-com/firestore/databases/-default-/data/~2Fcommunity-signups\n`;
@@ -216,6 +220,7 @@ exports.notifyOnCommunitySignup = onDocumentCreated(
       ${row("Language", esc(language))}
       ${row("Interests", esc(interests))}
       ${row("Source", esc(source))}
+      ${row("Campaign", esc(campaign))}
       ${row("Signed up", esc(createdAtUser))}
     </table>
     <div style="padding:18px 28px 24px;border-top:1px solid #eee;color:#888;font-size:12px;line-height:1.5;">

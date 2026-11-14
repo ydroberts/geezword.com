@@ -132,8 +132,11 @@ test("Community stays available but is not a door", async ({ page }) => {
   await expect(page.locator('#home .hero-community a[href="/start#community"]')).toHaveCount(1);
   await expect(page.locator("#community .community-band a.btn")).toHaveAttribute("href", "/start#community");
   await expect(page.locator('.nav-links a[href="#community"]')).toHaveCount(1);
-  const doorHrefs = await page.locator("#explore a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+  // The six doors stay product doors; registration is the separate link above them (LA, approved 2026-11-13).
+  const doorHrefs = await page.locator("#explore .door-card a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
   expect(doorHrefs.some((h) => /start/.test(h))).toBe(false);
+  await expect(page.locator("#explore .section-header #explore-join")).toHaveAttribute("href", "/start#community");
+  await expect(page.locator("#explore-join")).toHaveText("Join the Free Geezword Community →");
   // The hero's primary button is exploration, not registration.
   await expect(page.locator("#home .hero-buttons a.btn-primary")).not.toHaveAttribute("href", /start/);
 });

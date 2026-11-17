@@ -1,6 +1,6 @@
 // Phone layout of "What would you like to do?" for QR visitors (approved
 // 2026-11-17): two columns × three rows, whole card tappable, full
-// descriptions, Join button below the doors, homepage search behind a 🔍
+// descriptions, Join button above the doors, homepage search behind a 🔍
 // button. Tablets (768px) and desktop are unchanged.
 // Run through run-e2e.js (Firestore emulator, demo- project). Nothing reaches
 // production Firestore or Mailchimp: such requests are aborted and counted.
@@ -113,21 +113,20 @@ for (const [w, h] of PHONES) {
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `mobile-la-${w}.png`) });
   });
 
-  test(`${w}x${h}: Join the Free Geezword Community sits right below the six doors`, async ({ page }) => {
+  test(`${w}x${h}: Join the Free Geezword Community is above the six doors, visible without scrolling`, async ({ page }) => {
     await openLa(page, w, h);
     const r = await page.evaluate(() => {
-      const last = Math.max(...[...document.querySelectorAll("#explore .door-card")].map((c) => c.getBoundingClientRect().bottom));
+      const first = Math.min(...[...document.querySelectorAll("#explore .door-card")].map((c) => c.getBoundingClientRect().top));
       const j = document.querySelector("#explore-join").getBoundingClientRect();
-      return { lastDoorBottom: last, top: j.top, bottom: j.bottom, w: j.width, h: j.height, vh: innerHeight, vw: innerWidth };
+      const nav = document.querySelector(".navbar").getBoundingClientRect().bottom;
+      return { firstDoorTop: first, top: j.top, bottom: j.bottom, w: j.width, h: j.height, nav, vh: innerHeight, vw: innerWidth };
     });
-    expect(r.top).toBeGreaterThan(r.lastDoorBottom);
-    expect(r.top - r.lastDoorBottom).toBeLessThanOrEqual(32); // directly after the doors
+    expect(r.bottom).toBeLessThan(r.firstDoorTop);
+    expect(r.top).toBeGreaterThanOrEqual(r.nav);
     expect(r.h).toBeGreaterThanOrEqual(48);                    // full-width, easy to tap
     expect(r.w).toBeGreaterThanOrEqual(r.vw - 40);
-    // Real iPhone Safari shows ~150–190px less than the screen (toolbars), so
-    // the promise is "right after the doors": within one more screen of
-    // scrolling even on a 320x568 phone, where the doors alone fill the screen.
-    expect(r.bottom - r.vh, "within one more screen").toBeLessThanOrEqual(r.vh);
+    // Visible on arrival even after iPhone Safari's toolbars (~190px) take their share.
+    expect(r.bottom, "visible without scrolling").toBeLessThanOrEqual(r.vh - 190);
     // The other registration links are still there.
     await expect(page.locator('#home .hero-community a[href="/start#community"]')).toHaveCount(1);
     await expect(page.locator('.nav-links a.nav-join[href="#community"]')).toHaveCount(1);
@@ -152,6 +151,29 @@ test("every door: tapping anywhere on the card opens its destination (390px)", a
     }
   }
 });
+
+// Keyboard order = screen order: Join first, then the doors row by row.
+for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [1440, 900]]) {
+  test(`${w}px: Tab reaches Join before the six doors, in the order they appear`, async ({ page }) => {
+    await openLa(page, w, h);
+    await page.locator('#home .hero-community a').focus(); // last link before #explore
+    const seen = [];
+    for (let i = 0; i < 7; i++) {
+      await page.keyboard.press("Tab");
+      seen.push(await page.evaluate(() => {
+        const a = document.activeElement, card = a.closest(".door-card");
+        const b = (card || a).getBoundingClientRect();
+        return { id: a.id || card?.id, x: Math.round(b.left + scrollX), y: Math.round(b.top + scrollY) };
+      }));
+    }
+    expect(seen.map((s) => s.id)).toEqual(["explore-join", ...DOOR_ORDER]);
+    // Each next stop is further down the page, or to the right on the same row.
+    for (let i = 1; i < seen.length; i++) {
+      const [p, c] = [seen[i - 1], seen[i]];
+      expect(c.y > p.y + 4 || (Math.abs(c.y - p.y) <= 4 && c.x > p.x), `${p.id} → ${c.id}`).toBe(true);
+    }
+  });
+}
 
 test("doors: one link each, so screen readers announce each door once", async ({ page }) => {
   await openLa(page, 390, 844);

@@ -1352,30 +1352,24 @@ img {
   .door-card .door-link { width: 100%; justify-content: center; text-align: center; }
 }
 
-/* "Join the Free Geezword Community" under #explore. It follows the doors in
-   the source; tablets and desktop show it above them, exactly as before. */
+/* "Join the Free Geezword Community" between the heading and the doors, at
+   every width (spacing on tablets and desktop exactly as before). */
 #explore .container {
   display: flex;
   flex-direction: column;
 }
 
 #explore .section-header {
-  order: 1;
   margin-bottom: 0;
 }
 
 #explore .explore-join {
-  order: 2;
   width: 100%;
   max-width: 560px;
   margin: var(--gz-space-6) auto var(--gz-space-12);
   text-align: center;
   font-size: var(--gz-text-base);
   color: var(--text-mid);
-}
-
-#explore .door-grid {
-  order: 3;
 }
 
 /* Homepage search button: phones only (see the 560px block below). */
@@ -1385,14 +1379,10 @@ img {
 
 /* === Phones (≤560px): compact doors for QR visitors ===
    Two columns × three rows, whole card tappable, full descriptions kept;
-   the Join button follows the doors. Tablets and desktop are unaffected. */
+   the Join button sits above the doors. Tablets and desktop are unaffected. */
 @media (max-width: 560px) {
   #explore {
     padding: var(--gz-space-8) var(--gz-space-4);
-  }
-
-  #explore .section-header {
-    margin-bottom: var(--gz-space-6);
   }
 
   #explore .section-header h2 {
@@ -1474,9 +1464,8 @@ img {
   }
 
   #explore .explore-join {
-    order: 4;
     max-width: none;
-    margin: var(--gz-space-6) 0 0;
+    margin: var(--gz-space-4) 0 var(--gz-space-6);
   }
 
   #explore .explore-join .btn {

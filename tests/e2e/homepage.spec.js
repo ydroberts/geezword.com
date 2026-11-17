@@ -132,8 +132,8 @@ test("Community stays available but is not a door", async ({ page }) => {
   await expect(page.locator('#home .hero-community a[href="/start#community"]')).toHaveCount(1);
   await expect(page.locator("#community .community-band a.btn")).toHaveAttribute("href", "/start#community");
   await expect(page.locator('.nav-links a[href="#community"]')).toHaveCount(1);
-  // The six doors stay product doors; registration is the separate link next to
-  // them (LA, approved 2026-11-13; below the doors on phones, approved 2026-11-17).
+  // The six doors stay product doors; registration is the separate link above
+  // them at every width (LA, approved 2026-11-13; reconfirmed 2026-11-17).
   const doorHrefs = await page.locator("#explore .door-card a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
   expect(doorHrefs.some((h) => /start/.test(h))).toBe(false);
   await expect(page.locator("#explore #explore-join")).toHaveAttribute("href", "/start#community");

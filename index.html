@@ -28,7 +28,9 @@
         <li><a href="#kidase">Kidase</a></li>
         <li><a href="#community" class="nav-join">Community</a></li>
       </ul>
-      <div class="nav-search">
+      <!-- Homepage only: on phones the search box folds into a 🔍 button (styles.css, script.js). -->
+      <div class="nav-search nav-search-compact">
+        <button type="button" class="nav-search-toggle" aria-label="Search apps" aria-expanded="false" aria-controls="searchInput">&#128269;</button>
         <span class="nav-search-icon">&#128269;</span>
         <input type="text" id="searchInput" placeholder="Search apps..." autocomplete="off">
         <div class="search-results" id="searchResults"></div>
@@ -70,8 +72,10 @@
       <div class="section-header">
         <h2 id="explore-heading">What would you like to do?</h2>
         <p>Choose what you want to explore today.</p>
-        <p class="explore-join" style="margin-top: var(--gz-space-6);"><a href="/start#community" class="btn btn-primary" id="explore-join">Join the Free Geezword Community&nbsp;&#8594;</a></p>
       </div>
+      <!-- Registration first, above the doors at every width (source order =
+           screen order = keyboard order). -->
+      <p class="explore-join"><a href="/start#community" class="btn btn-primary" id="explore-join">Join the Free Geezword Community&nbsp;&#8594;</a></p>
       <ul class="door-grid">
 
         <li class="door-card" id="door-learn">

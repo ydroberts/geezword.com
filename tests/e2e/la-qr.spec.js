@@ -159,7 +159,8 @@ test.afterAll(() => {
 // ---------------------------------------------------------------------------
 // LA registration link under "What would you like to do?" (approved 2026-11-13)
 // ---------------------------------------------------------------------------
-for (const [w, h] of [[390, 844], [320, 568], [1440, 900]]) {
+// Above the six doors at every width (owner, 2026-11-17).
+for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [1440, 900]]) {
   test(`${w}x${h}: after /la the "Join the Free Geezword Community" link is on screen without scrolling`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.goto(`${BASE}/la`, { waitUntil: "load" });

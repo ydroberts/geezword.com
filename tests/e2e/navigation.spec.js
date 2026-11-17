@@ -248,7 +248,15 @@ for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [820, 1180], [940, 80
       await expect(menu).toBeHidden();
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
       await expect(toggle).toHaveAttribute("aria-controls", await menu.getAttribute("id"));
-      await expect(page.locator(".navbar #searchInput")).toBeVisible();
+      // Homepage phones (≤560px): search sits behind a 🔍 button (approved
+      // 2026-11-17, homepage only). Everywhere else the search box shows.
+      if (name === "index" && w <= 560) {
+        await expect(page.locator(".navbar .nav-search-toggle")).toBeVisible();
+        await expect(page.locator(".navbar #searchInput")).toBeHidden();
+      } else {
+        await expect(page.locator(".navbar #searchInput")).toBeVisible();
+        await expect(page.locator(".navbar .nav-search-toggle")).toHaveCount(name === "index" ? 1 : 0);
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 
       // Keyboard: focus the button and press Enter.

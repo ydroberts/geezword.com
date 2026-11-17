@@ -1352,6 +1352,191 @@ img {
   .door-card .door-link { width: 100%; justify-content: center; text-align: center; }
 }
 
+/* "Join the Free Geezword Community" under #explore. It follows the doors in
+   the source; tablets and desktop show it above them, exactly as before. */
+#explore .container {
+  display: flex;
+  flex-direction: column;
+}
+
+#explore .section-header {
+  order: 1;
+  margin-bottom: 0;
+}
+
+#explore .explore-join {
+  order: 2;
+  width: 100%;
+  max-width: 560px;
+  margin: var(--gz-space-6) auto var(--gz-space-12);
+  text-align: center;
+  font-size: var(--gz-text-base);
+  color: var(--text-mid);
+}
+
+#explore .door-grid {
+  order: 3;
+}
+
+/* Homepage search button: phones only (see the 560px block below). */
+.nav-search-toggle {
+  display: none;
+}
+
+/* === Phones (≤560px): compact doors for QR visitors ===
+   Two columns × three rows, whole card tappable, full descriptions kept;
+   the Join button follows the doors. Tablets and desktop are unaffected. */
+@media (max-width: 560px) {
+  #explore {
+    padding: var(--gz-space-8) var(--gz-space-4);
+  }
+
+  #explore .section-header {
+    margin-bottom: var(--gz-space-6);
+  }
+
+  #explore .section-header h2 {
+    font-size: clamp(var(--gz-text-xl), 7vw, var(--gz-text-2xl));
+    line-height: 1.2;
+    text-wrap: balance;
+    margin-bottom: var(--gz-space-2);
+  }
+
+  #explore .section-header p {
+    font-size: var(--gz-text-sm);
+  }
+
+  #explore .door-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gz-space-3);
+  }
+
+  /* Letter beside the title; description fills; link at the foot. */
+  #explore .door-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    column-gap: var(--gz-space-2);
+    padding: var(--gz-space-4) var(--gz-space-3);
+  }
+
+  #explore .door-card:active {
+    background: var(--gz-saffron-pale);
+  }
+
+  #explore .door-glyph {
+    font-size: var(--gz-text-xl);
+    line-height: 1;
+    margin: 0;
+    align-self: center;
+  }
+
+  #explore .door-card h3 {
+    font-size: var(--gz-text-lg);
+    line-height: 1.2;
+    margin: 0;
+    align-self: center;
+  }
+
+  #explore .door-card p {
+    grid-column: 1 / -1;
+    font-size: var(--gz-text-xs);
+    line-height: 1.45;
+    margin: var(--gz-space-2) 0 var(--gz-space-3);
+  }
+
+  /* The card's own link, shown as a text link, stretched over the whole card. */
+  #explore .door-card .door-link {
+    grid-column: 1 / -1;
+    display: block;
+    width: auto;
+    line-height: 1.35;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: var(--gz-text-xs);
+    font-weight: 700;
+    color: var(--gz-indigo);
+    text-align: left;
+  }
+
+  #explore .door-card .door-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  #explore .door-card:has(.door-link:focus-visible) {
+    outline: 3px solid var(--gz-saffron-deep);
+    outline-offset: 2px;
+  }
+
+  #explore .explore-join {
+    order: 4;
+    max-width: none;
+    margin: var(--gz-space-6) 0 0;
+  }
+
+  #explore .explore-join .btn {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+    background: var(--gz-saffron);
+  }
+
+  /* Homepage header: the search box folds into a 🔍 button; tapping it
+     opens the same search field across the header. */
+  .nav-container {
+    position: relative;
+  }
+
+  .nav-search-compact {
+    position: static;
+    margin-left: auto;
+  }
+
+  .nav-search-compact .nav-search-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: none;
+    border: none;
+    border-radius: var(--gz-radius-button);
+    font-size: var(--gz-text-base);
+    cursor: pointer;
+  }
+
+  .nav-search-compact .nav-search-icon,
+  .nav-search-compact input {
+    display: none;
+  }
+
+  .nav-search-compact.is-open input,
+  .nav-search-compact.is-open input:focus {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 96px;
+    width: auto;
+    height: 44px;
+    padding: 0 var(--gz-space-3);
+    font-size: var(--gz-text-sm); /* 16px: stops iPhone zooming in on focus */
+    background: var(--white);
+  }
+
+  .nav-search-compact .search-results {
+    top: 60px;
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+}
+
 /* Language entry: Tigrinya / Amharic / Geez & Kidase */
 .path-grid,
 .teach-grid {

@@ -132,10 +132,11 @@ test("Community stays available but is not a door", async ({ page }) => {
   await expect(page.locator('#home .hero-community a[href="/start#community"]')).toHaveCount(1);
   await expect(page.locator("#community .community-band a.btn")).toHaveAttribute("href", "/start#community");
   await expect(page.locator('.nav-links a[href="#community"]')).toHaveCount(1);
-  // The six doors stay product doors; registration is the separate link above them (LA, approved 2026-11-13).
+  // The six doors stay product doors; registration is the separate link next to
+  // them (LA, approved 2026-11-13; below the doors on phones, approved 2026-11-17).
   const doorHrefs = await page.locator("#explore .door-card a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
   expect(doorHrefs.some((h) => /start/.test(h))).toBe(false);
-  await expect(page.locator("#explore .section-header #explore-join")).toHaveAttribute("href", "/start#community");
+  await expect(page.locator("#explore #explore-join")).toHaveAttribute("href", "/start#community");
   await expect(page.locator("#explore-join")).toHaveText("Join the Free Geezword Community →");
   // The hero's primary button is exploration, not registration.
   await expect(page.locator("#home .hero-buttons a.btn-primary")).not.toHaveAttribute("href", /start/);
@@ -208,10 +209,11 @@ for (const [w, h] of [[1440, 900], [390, 844], [320, 844]]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     const cols = await page.locator("#explore .door-card").evaluateAll((cards) =>
       new Set(cards.map((c) => Math.round(c.getBoundingClientRect().left))).size);
-    expect(cols).toBe(w >= 1000 ? 3 : 1);
+    // Phones: compact two-column doors (approved 2026-11-17).
+    expect(cols).toBe(w >= 1000 ? 3 : 2);
     const narrowest = await page.locator("#explore .door-card").evaluateAll((cards) =>
       Math.min(...cards.map((c) => c.getBoundingClientRect().width)));
-    expect(narrowest).toBeGreaterThanOrEqual(250);
+    expect(narrowest).toBeGreaterThanOrEqual(w >= 1000 ? 250 : 130);
     const glyphPx = await page.locator(".door-glyph").first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
     expect(glyphPx).toBeGreaterThanOrEqual(20);
     // Habi keeps its proportions.

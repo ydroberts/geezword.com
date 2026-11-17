@@ -218,8 +218,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Homepage on phones: a 🔍 button opens and closes the search field.
+    // Elsewhere (no button, or button hidden above 560px) nothing changes.
+    const searchToggle = searchBox.querySelector('.nav-search-toggle');
+    const compactOpen = () => searchBox.classList.contains('is-open');
+    function setCompactOpen(open) {
+      searchBox.classList.toggle('is-open', open);
+      searchToggle.setAttribute('aria-expanded', String(open));
+      if (open) {
+        searchInput.focus();
+      } else {
+        searchResults.classList.remove('open');
+      }
+    }
+    if (searchToggle) {
+      searchToggle.addEventListener('click', () => setCompactOpen(!compactOpen()));
+      // Tap outside closes it (taps inside, including the button, are handled above).
+      document.addEventListener('click', (e) => {
+        if (compactOpen() && !e.target.closest('.nav-search')) setCompactOpen(false);
+      });
+      // Tabbing away closes it. (A tap elsewhere has no relatedTarget and is
+      // handled by the click listener, so tapping the button never re-opens it.)
+      searchBox.addEventListener('focusout', (e) => {
+        if (compactOpen() && e.relatedTarget && !searchBox.contains(e.relatedTarget)) setCompactOpen(false);
+      });
+    }
+
     // Escape closes the results and keeps focus in the search box.
     searchBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchToggle && compactOpen()) {
+        setCompactOpen(false);
+        searchToggle.focus();
+        return;
+      }
       if (e.key === 'Escape' && searchResults.classList.contains('open')) {
         searchResults.classList.remove('open');
         if (document.activeElement !== searchInput) {

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Event page reached only by QR code: kept out of search results and off the site menu. -->
+  <meta name="robots" content="noindex, nofollow">
+  <!-- Stop iPhone Safari turning the Zelle number into a phone-call link. -->
+  <meta name="format-detection" content="telephone=no">
+  <title>Pay with Zelle — GeezWord Books</title>
+  <meta name="description" content="How to pay for GeezWord books with Zelle at the book table.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..800&family=Newsreader:opsz,wght@6..72,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* /pay only. Colours, fonts and spacing come from the DESIGN.md tokens in styles.css. */
+    body.pay-page { background: var(--gz-parchment); color: var(--gz-ink); }
+    .pay-header { background: var(--gz-indigo); padding: var(--gz-space-3) var(--gz-space-4); }
+    .pay-header .nav-logo { color: var(--gz-parchment); text-decoration: none; }
+    .pay-header .nav-logo span { color: var(--gz-saffron); }
+    .pay-main { max-width: 34rem; margin: 0 auto; overflow-wrap: break-word; padding: var(--gz-space-6) var(--gz-space-4) var(--gz-space-12); }
+    .pay-main h1 { font-size: var(--gz-text-2xl); line-height: 1.2; color: var(--gz-indigo); margin: 0 0 var(--gz-space-6); }
+    .pay-main h2 { font-size: var(--gz-text-xl); line-height: 1.25; color: var(--gz-indigo); margin: 0 0 var(--gz-space-3); }
+    .pay-card { background: #fff; border: 1px solid var(--gz-parchment-deep); border-radius: 12px; padding: var(--gz-space-4); margin-bottom: var(--gz-space-6); }
+
+    .pay-zelle { border: 2px solid var(--gz-indigo); }
+    .pay-label { font-size: var(--gz-text-sm); color: var(--gz-ink-soft); margin: 0; }
+    .pay-number { font-family: var(--gz-font-display); font-size: var(--gz-text-2xl); font-weight: 700; letter-spacing: 0.02em;
+      color: var(--gz-indigo); margin: 0 0 var(--gz-space-2); font-variant-numeric: lining-nums tabular-nums; overflow-wrap: anywhere; }
+    .pay-recipient { font-size: var(--gz-text-base); margin: 0 0 var(--gz-space-4); }
+    .pay-recipient strong { font-family: var(--gz-font-display); font-size: var(--gz-text-lg); color: var(--gz-indigo); }
+    .pay-copy { display: flex; justify-content: center; width: 100%; min-height: 52px; padding: var(--gz-space-3) var(--gz-space-4);
+      background: var(--gz-saffron); color: var(--gz-ink); border: none; border-radius: 10px;
+      font-family: var(--gz-font-body); font-size: var(--gz-text-lg); font-weight: 700; cursor: pointer;
+      -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+    /* Hover only where there is a mouse: on phones a tapped button would otherwise stay pale. */
+    @media (hover: hover) { .pay-copy:hover { background: var(--gz-saffron-pale); } }
+    .pay-copy:focus-visible { outline: 3px solid var(--gz-indigo); outline-offset: 3px; }
+    .pay-copy-status { min-height: 1.5em; margin: var(--gz-space-2) 0 0; font-size: var(--gz-text-sm); color: var(--gz-moss); font-weight: 600; text-align: center; }
+
+    .pay-books { list-style: none; margin: 0; padding: 0; }
+    .pay-books li { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gz-space-3);
+      padding: var(--gz-space-3) 0; border-top: 1px solid var(--gz-parchment-deep); }
+    .pay-books li:first-child { border-top: none; padding-top: 0; }
+    /* The title takes the space left by the price and wraps inside it, so a price never drops to its own line. */
+    .pay-book { flex: 1 1 auto; min-width: 0; font-size: var(--gz-text-lg); line-height: 1.3; }
+    .pay-book small { display: block; font-size: var(--gz-text-sm); color: var(--gz-ink-soft); }
+    .pay-price { font-family: var(--gz-font-display); font-size: var(--gz-text-2xl); font-weight: 700; color: var(--gz-indigo);
+      font-variant-numeric: lining-nums; white-space: nowrap; }
+
+    .pay-steps { margin: 0; padding-left: 1.5em; }
+    .pay-steps li { margin-bottom: var(--gz-space-2); line-height: 1.5; }
+    .pay-notice { background: var(--gz-saffron-pale); border-left: 6px solid var(--gz-saffron-deep); border-radius: 8px;
+      padding: var(--gz-space-4); margin-bottom: var(--gz-space-6); }
+    .pay-notice p { margin: 0; line-height: 1.5; }
+    .pay-notice p + p { margin-top: var(--gz-space-2); }
+    .pay-safety { font-size: var(--gz-text-sm); color: var(--gz-ink-soft); line-height: 1.5; margin: 0; }
+    .pay-footer { text-align: center; font-size: var(--gz-text-sm); color: var(--gz-ink-soft); padding: 0 var(--gz-space-4) var(--gz-space-8); }
+    .pay-footer a { color: var(--gz-indigo); }
+    @media (min-width: 380px) { .pay-number { font-size: 2.25rem; } }
+  </style>
+</head>
+<body class="pay-page">
+
+  <header class="pay-header">
+    <a href="/" class="nav-logo">Geez<span>Word</span></a>
+  </header>
+
+  <main class="pay-main">
+    <h1>Geezword Books — Pay with Zelle</h1>
+
+    <section class="pay-card pay-zelle" aria-labelledby="zelle-heading">
+      <h2 id="zelle-heading">Send your payment by Zelle</h2>
+      <p class="pay-label" id="zelle-number-label">Zelle phone number</p>
+      <p class="pay-number" id="zelle-number">713-874-4653</p>
+      <p class="pay-recipient">Recipient name shown in Zelle: <strong id="zelle-recipient">geezword</strong></p>
+      <button type="button" class="pay-copy" id="copy-zelle" data-copy="7138744653">Copy Zelle Number</button>
+      <p class="pay-copy-status" id="copy-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="pay-card" aria-labelledby="books-heading">
+      <h2 id="books-heading">Books</h2>
+      <ul class="pay-books">
+        <li><span class="pay-book">Tigrinya for Beginners</span><span class="pay-price">$35</span></li>
+        <li><span class="pay-book">Tigrinya Letter Tracing</span><span class="pay-price">$30</span></li>
+        <li><span class="pay-book">Both books <small>one copy of each</small></span><span class="pay-price">$65</span></li>
+      </ul>
+    </section>
+
+    <section class="pay-card" aria-labelledby="steps-heading">
+      <h2 id="steps-heading">How to pay</h2>
+      <ol class="pay-steps">
+        <li>Choose the books you want to purchase.</li>
+        <li>Open Zelle in your bank's mobile app.</li>
+        <li>Use the phone number shown above.</li>
+        <li>Enter the total payment amount.</li>
+        <li>Verify the recipient's name before sending. It should read <strong>geezword</strong>.</li>
+        <li>Show the payment confirmation to the book-table attendant.</li>
+      </ol>
+    </section>
+
+    <div class="pay-notice" role="note">
+      <p><strong>Please wait while the seller verifies receipt of your payment before collecting your books.</strong></p>
+      <p>This page does not process or confirm payments. Your payment is checked by the seller, not by this website.</p>
+    </div>
+
+    <p class="pay-safety">You pay in your own bank's app. We never ask for your bank login, card number, or one-time codes.</p>
+  </main>
+
+  <footer class="pay-footer">
+    <p>&copy; 2026 GeezWord · <a href="/books">About the books</a></p>
+  </footer>
+
+  <script>
+    // Copy the Zelle number (digits only). Falls back to selecting it so the buyer can copy it by hand.
+    (function () {
+      var button = document.getElementById("copy-zelle");
+      var status = document.getElementById("copy-status");
+      var shown = document.getElementById("zelle-number");
+      var digits = button.getAttribute("data-copy");
+      var resetTimer;
+
+      function legacyCopy(text) {
+        var area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.top = "0";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        area.setSelectionRange(0, text.length);
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(area);
+        return ok;
+      }
+
+      function done(ok) {
+        clearTimeout(resetTimer);
+        if (ok) {
+          button.textContent = "Copied ✓";
+          status.textContent = "Zelle number copied: " + digits;
+          resetTimer = setTimeout(function () { button.textContent = "Copy Zelle Number"; }, 3000);
+        } else {
+          var range = document.createRange();
+          range.selectNodeContents(shown);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          status.textContent = "Couldn't copy automatically. Press and hold the number to copy it.";
+        }
+      }
+
+      button.addEventListener("click", function () {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(digits).then(function () { done(true); }, function () { done(legacyCopy(digits)); });
+        } else {
+          done(legacyCopy(digits));
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

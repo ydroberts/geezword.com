@@ -113,8 +113,10 @@ test("event URLs still work: /start#community, /#explore, /play?game=…, /downl
   await expect(page.locator("#explore .door-card")).toHaveCount(6);
   await page.goto(`${BASE}/play?game=sort`);
   await expect(page.locator("h1")).toHaveCount(1);
-  // The printed QR redirect is unchanged.
-  const master = execFileSync("git", ["show", "origin/master:vercel.json"], { cwd: REPO_ROOT, encoding: "utf8" });
+  // The printed QR redirect is unchanged, except that /la now lands on the
+  // community section instead of the doors (owner-approved 2026-11-17).
+  const master = execFileSync("git", ["show", "origin/master:vercel.json"], { cwd: REPO_ROOT, encoding: "utf8" })
+    .replace("la-book-signing-2026#explore", "la-book-signing-2026#community");
   expect(JSON.parse(read("vercel.json"))).toEqual(JSON.parse(master));
 });
 
@@ -127,6 +129,8 @@ test("registration and backend files are untouched", async () => {
   // Approved 2026-11-13 (Option A): the owner notification may show the
   // campaign, and its emulator tests may cover that. Nothing else in functions/.
   const ALLOWED = new Set(["functions/index.js", "functions/test/member-sync.test.js"]);
+  // vercel.json may differ from master only in the /la landing section (checked above).
+  ALLOWED.add("vercel.json");
   for (const f of all) {
     if (ALLOWED.has(f)) continue;
     expect(f, "must not change").not.toMatch(/^(functions\/|firestore\.|firebase\.json|\.firebaserc|start\.css|journey\.js|vercel\.json|\.vercelignore)/);

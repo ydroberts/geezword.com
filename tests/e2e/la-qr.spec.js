@@ -16,8 +16,10 @@ const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const EMULATOR_PORT = EMULATOR_HOST && EMULATOR_HOST.split(":").pop();
 const SHOTS = process.env.E2E_SCREENSHOT_DIR || "";
 
-const DESTINATION = "/?utm_source=qr&utm_medium=print&utm_campaign=la-book-signing-2026#explore";
+const DESTINATION = "/?utm_source=qr&utm_medium=print&utm_campaign=la-book-signing-2026#community";
 const CAMPAIGN = { utmSource: "qr", utmMedium: "print", utmCampaign: "la-book-signing-2026" };
+const LA_INTRO = "Stay connected with Geezword beyond the Los Angeles event. Join our free community to receive updates about learning resources, books, apps, games, keyboards, and upcoming community activities.";
+const GENERAL_INTRO = "Stay connected with Geezword. Join our free community to receive updates about learning resources, books, apps, games, keyboards, and upcoming community activities.";
 const PROD_BLOCK = /firestore\.googleapis\.com|list-manage\.com|mailchimp\.com/;
 
 let server;
@@ -53,7 +55,7 @@ test("vercel.json: /la is the only redirect, temporary, with the exact destinati
   expect(redirectsConfig()).toEqual([{ source: "/la", destination: DESTINATION, permanent: false }]);
   const dest = new URL(DESTINATION, "https://www.geezword.com");
   expect(dest.pathname).toBe("/");
-  expect(dest.hash).toBe("#explore");
+  expect(dest.hash).toBe("#community"); // the community section, first after the banner (owner, 2026-11-17)
   expect(Object.fromEntries(dest.searchParams)).toEqual({
     utm_source: "qr", utm_medium: "print", utm_campaign: "la-book-signing-2026",
   });
@@ -87,7 +89,7 @@ test("other routes are unaffected", async ({ request }) => {
 });
 
 for (const [w, h] of [[1440, 900], [390, 844], [320, 568]]) {
-  test(`browser at ${w}x${h}: /la lands on the six doors with the campaign in the URL and stored for the tab`, async ({ page }) => {
+  test(`browser at ${w}x${h}: /la lands on the community section with the campaign in the URL and stored for the tab`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     const navigations = [];
     page.on("response", (r) => { if (r.request().isNavigationRequest() && r.url().startsWith(BASE)) navigations.push(r.status()); });
@@ -97,18 +99,20 @@ for (const [w, h] of [[1440, 900], [390, 844], [320, 568]]) {
     expect(navigations.slice(0, 2)).toEqual([307, 200]);
     expect(page.url()).toBe(`${BASE}${DESTINATION}`);
     expect(new URL(page.url()).pathname).not.toMatch(/start/);
+    await expect(page.locator("#community h2")).toHaveText("Join the Geezword Community");
+    await expect(page.locator("#community-intro")).toHaveText(LA_INTRO);
     await expect(page.locator("#explore h2")).toHaveText("What would you like to do?");
     await expect(page.locator("#explore .door-card")).toHaveCount(6);
     const stored = await page.evaluate(() => JSON.parse(sessionStorage.getItem("geezword-start-campaign")));
     expect(stored).toEqual(CAMPAIGN);
     const pos = await page.evaluate(() => {
       const nav = document.querySelector(".navbar").getBoundingClientRect().bottom;
-      const h2 = document.querySelector("#explore h2").getBoundingClientRect();
+      const h2 = document.querySelector("#community h2").getBoundingClientRect();
       return { below: h2.top >= nav, onScreen: h2.bottom <= innerHeight,
                noH: document.documentElement.scrollWidth <= innerWidth };
     });
     expect(pos).toEqual({ below: true, onScreen: true, noH: true });
-    // No registration is needed to scan and explore.
+    // No registration is needed to scan and explore: the form stays on /start.
     await expect(page.locator("#community-form")).toHaveCount(0);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `la-landing-${w}x${h}.png`) });
   });
@@ -157,20 +161,20 @@ test.afterAll(() => {
 });
 
 // ---------------------------------------------------------------------------
-// LA registration link under "What would you like to do?" (approved 2026-11-13)
+// Community section (approved 2026-11-17): its own section after the banner,
+// above "What would you like to do?". /la lands on it.
 // ---------------------------------------------------------------------------
-// Above the six doors at every width (owner, 2026-11-17).
 for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [1440, 900]]) {
-  test(`${w}x${h}: after /la the "Join the Free Geezword Community" link is on screen without scrolling`, async ({ page }) => {
+  test(`${w}x${h}: after /la the "Join the Geezword Community — Free" button is on screen without scrolling`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.goto(`${BASE}/la`, { waitUntil: "load" });
     await scrollSettled(page);
     const r = await page.evaluate(() => {
       const nav = document.querySelector(".navbar").getBoundingClientRect().bottom;
-      const a = document.querySelector("#explore-join").getBoundingClientRect();
+      const a = document.querySelector("#community-join").getBoundingClientRect();
       return { top: a.top, bottom: a.bottom, nav, vh: innerHeight, hash: location.hash };
     });
-    expect(r.hash).toBe("#explore");
+    expect(r.hash).toBe("#community");
     expect(r.top).toBeGreaterThanOrEqual(r.nav);
     expect(r.bottom).toBeLessThanOrEqual(r.vh);
   });
@@ -180,7 +184,7 @@ test("clicking the join link after /la keeps the LA campaign and the registratio
   test.skip(!EMULATOR_PORT, "needs the Firestore emulator (npm test)");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/la`, { waitUntil: "load" });
-  await page.locator("#explore-join").click();
+  await page.locator("#community-join").click();
   await page.waitForURL(/\/start#community$/);
   expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem("geezword-start-campaign")))).toEqual(CAMPAIGN);
   // Same tab; only the emulator switch is added before submitting.
@@ -204,15 +208,28 @@ test("clicking the join link after /la keeps the LA campaign and the registratio
 test("other campaign sources still work: a different tagged link replaces the stored campaign", async ({ page }) => {
   await page.goto(`${BASE}/la`, { waitUntil: "load" });
   await page.goto(`${BASE}/?utm_source=facebook&utm_medium=social&utm_campaign=dallas-festival-2027#explore`, { waitUntil: "load" });
-  await page.locator("#explore-join").click();
+  await page.locator("#community-join").click();
   await page.waitForURL(/\/start#community$/);
   expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem("geezword-start-campaign"))))
     .toEqual({ utmSource: "facebook", utmMedium: "social", utmCampaign: "dallas-festival-2027" });
 });
 
+test("only the LA campaign changes the introduction; other visits get the general text", async ({ page }) => {
+  await page.goto(`${BASE}/?utm_source=facebook&utm_medium=social&utm_campaign=dallas-festival-2027`, { waitUntil: "load" });
+  await expect(page.locator("#community-intro")).toHaveText(GENERAL_INTRO);
+  await page.goto(`${BASE}/`, { waitUntil: "load" }); // stored campaign is Dallas, not LA
+  await expect(page.locator("#community-intro")).toHaveText(GENERAL_INTRO);
+  await page.goto(`${BASE}/la`, { waitUntil: "load" });
+  await expect(page.locator("#community-intro")).toHaveText(LA_INTRO);
+  await page.goto(`${BASE}/books`);
+  await page.goto(`${BASE}/`, { waitUntil: "load" }); // same tab, later untagged visit: still the LA visitor
+  await expect(page.locator("#community-intro")).toHaveText(LA_INTRO);
+  await expect(page.locator("#community-intro")).not.toContainText("reserv");
+});
+
 test("untagged visit: the join link adds no campaign", async ({ page }) => {
   await page.goto(`${BASE}/`, { waitUntil: "load" });
-  await page.locator("#explore-join").click();
+  await page.locator("#community-join").click();
   await page.waitForURL(/\/start#community$/);
   expect(await page.evaluate(() => sessionStorage.getItem("geezword-start-campaign"))).toBeNull();
 });

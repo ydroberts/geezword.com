@@ -1,7 +1,7 @@
 // Phone layout of "What would you like to do?" for QR visitors (approved
 // 2026-11-17): two columns × three rows, whole card tappable, full
-// descriptions, Join button above the doors, homepage search behind a 🔍
-// button. Tablets (768px) and desktop are unchanged.
+// descriptions, homepage search behind a 🔍 button. Registration is its own
+// section above it (#community, owner 2026-11-17), where /la lands. Tablets (768px) and desktop are unchanged.
 // Run through run-e2e.js (Firestore emulator, demo- project). Nothing reaches
 // production Firestore or Mailchimp: such requests are aborted and counted.
 "use strict";
@@ -113,23 +113,27 @@ for (const [w, h] of PHONES) {
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `mobile-la-${w}.png`) });
   });
 
-  test(`${w}x${h}: Join the Free Geezword Community is above the six doors, visible without scrolling`, async ({ page }) => {
+  test(`${w}x${h}: "Join the Geezword Community — Free" is in its own section above the doors, visible on arrival`, async ({ page }) => {
     await openLa(page, w, h);
     const r = await page.evaluate(() => {
       const first = Math.min(...[...document.querySelectorAll("#explore .door-card")].map((c) => c.getBoundingClientRect().top));
-      const j = document.querySelector("#explore-join").getBoundingClientRect();
+      const j = document.querySelector("#community-join").getBoundingClientRect();
       const nav = document.querySelector(".navbar").getBoundingClientRect().bottom;
-      return { firstDoorTop: first, top: j.top, bottom: j.bottom, w: j.width, h: j.height, nav, vh: innerHeight, vw: innerWidth };
+      return { firstDoorTop: first, top: j.top, bottom: j.bottom, w: j.width, h: j.height, nav, vh: innerHeight, vw: innerWidth,
+        inCommunity: !!document.querySelector("#community #community-join"), inExplore: document.querySelectorAll('#explore a[href*="start"]').length };
     });
+    expect(r.inCommunity).toBe(true);
+    expect(r.inExplore).toBe(0);
     expect(r.bottom).toBeLessThan(r.firstDoorTop);
     expect(r.top).toBeGreaterThanOrEqual(r.nav);
     expect(r.h).toBeGreaterThanOrEqual(48);                    // full-width, easy to tap
-    expect(r.w).toBeGreaterThanOrEqual(r.vw - 40);
-    // Visible on arrival even after iPhone Safari's toolbars (~190px) take their share.
-    expect(r.bottom, "visible without scrolling").toBeLessThanOrEqual(r.vh - 190);
+    expect(r.w).toBeGreaterThanOrEqual(r.vw - 80);
+    // Visible on arrival; from 375px up even after iPhone Safari's toolbars (~190px).
+    expect(r.bottom, "visible without scrolling").toBeLessThanOrEqual(w >= 375 ? r.vh - 190 : r.vh);
     // The other registration links are still there.
     await expect(page.locator('#home .hero-community a[href="/start#community"]')).toHaveCount(1);
     await expect(page.locator('.nav-links a.nav-join[href="#community"]')).toHaveCount(1);
+    await expect(page.locator("#community-join-bottom")).toHaveCount(1);
   });
 }
 
@@ -139,6 +143,7 @@ test("every door: tapping anywhere on the card opens its destination (390px)", a
     await openLa(page, 390, 844);
     const card = page.locator(`#${id}`);
     const href = await card.locator(".door-link").getAttribute("href");
+    await card.scrollIntoViewIfNeeded(); // /la lands on the community section above the doors
     const box = await card.boundingBox();
     // Tap the top-right corner area: away from the visible link text.
     await page.mouse.click(box.x + box.width - 8, box.y + 8);
@@ -152,11 +157,11 @@ test("every door: tapping anywhere on the card opens its destination (390px)", a
   }
 });
 
-// Keyboard order = screen order: Join first, then the doors row by row.
+// Keyboard order = screen order: the community Join button, then the doors row by row.
 for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [1440, 900]]) {
-  test(`${w}px: Tab reaches Join before the six doors, in the order they appear`, async ({ page }) => {
+  test(`${w}px: Tab reaches the Join button before the six doors, in the order they appear`, async ({ page }) => {
     await openLa(page, w, h);
-    await page.locator('#home .hero-community a').focus(); // last link before #explore
+    await page.locator('#home .hero-community a').focus(); // last link before #community
     const seen = [];
     for (let i = 0; i < 7; i++) {
       await page.keyboard.press("Tab");
@@ -166,7 +171,7 @@ for (const [w, h] of [[390, 844], [320, 568], [768, 1024], [1440, 900]]) {
         return { id: a.id || card?.id, x: Math.round(b.left + scrollX), y: Math.round(b.top + scrollY) };
       }));
     }
-    expect(seen.map((s) => s.id)).toEqual(["explore-join", ...DOOR_ORDER]);
+    expect(seen.map((s) => s.id)).toEqual(["community-join", ...DOOR_ORDER]);
     // Each next stop is further down the page, or to the right on the same row.
     for (let i = 1; i < seen.length; i++) {
       const [p, c] = [seen[i - 1], seen[i]];
@@ -245,7 +250,7 @@ test("other pages keep the search box on phones (homepage only)", async ({ page 
   }
 });
 
-test("768px tablet and 1440px desktop: layout unchanged (Join above the doors)", async ({ page }) => {
+test("768px tablet and 1440px desktop: doors unchanged; no Join button inside the section", async ({ page }) => {
   for (const [w, h, cols] of [[768, 1024, 2], [1440, 900, 3]]) {
     await page.setViewportSize({ width: w, height: h });
     await page.goto(`${BASE}/#explore`);
@@ -253,21 +258,22 @@ test("768px tablet and 1440px desktop: layout unchanged (Join above the doors)",
     const r = await page.evaluate(() => {
       const cards = [...document.querySelectorAll("#explore .door-card")];
       const grid = document.querySelector("#explore .door-grid").getBoundingClientRect();
-      const j = document.querySelector("#explore-join").getBoundingClientRect();
       const head = document.querySelector("#explore .section-header").getBoundingClientRect();
+      const community = document.querySelector("#community").getBoundingClientRect();
       return {
         cols: new Set(cards.map((c) => Math.round(c.getBoundingClientRect().left))).size,
-        joinAboveGrid: j.bottom < grid.top, joinBelowHeader: j.top > head.bottom,
-        gapJoinGrid: Math.round(grid.top - j.bottom), gapHeadJoin: Math.round(j.top - head.bottom),
+        gapHeadGrid: Math.round(grid.top - head.bottom),
+        communityAbove: community.bottom <= document.querySelector("#explore").getBoundingClientRect().top + 0.5,
+        joinInside: document.querySelectorAll('#explore a[href*="start"]').length,
         linkStyle: getComputedStyle(cards[0].querySelector(".door-link")).borderTopWidth,
         toggle: getComputedStyle(document.querySelector(".nav-search-toggle")).display,
         search: getComputedStyle(document.querySelector("#searchInput")).display,
       };
     });
     expect(r.cols).toBe(cols);
-    expect(r.joinAboveGrid && r.joinBelowHeader).toBe(true);
-    expect(r.gapJoinGrid).toBe(48);     // as before: section-header margin-bottom
-    expect(r.gapHeadJoin).toBe(24);     // as before: the join paragraph's margin-top
+    expect(r.gapHeadGrid).toBe(48);     // standard section-header margin-bottom
+    expect(r.communityAbove).toBe(true);
+    expect(r.joinInside).toBe(0);
     expect(r.linkStyle).toBe("2px");    // doors keep their outlined buttons
     expect(r.toggle).toBe("none");
     expect(r.search).not.toBe("none");
@@ -282,9 +288,9 @@ test("journey: /la → open a door → back → join → registration keeps the 
   await page.locator("#door-read").click();
   await expect(page).toHaveURL(/\/books(\.html)?$/);
   await page.goBack();
-  await expect(page.locator("#explore-join")).toBeVisible();
+  await expect(page.locator("#community-join")).toBeVisible();
   // Then join.
-  await page.locator("#explore-join").click();
+  await page.locator("#community-join").click();
   await page.waitForURL(/\/start#community$/);
   expect(await page.evaluate(() => JSON.parse(sessionStorage.getItem("geezword-start-campaign")))).toEqual(CAMPAIGN);
   const email = `la.mobile.${Date.now()}@example.test`;

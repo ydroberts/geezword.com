@@ -130,14 +130,32 @@ test("hero identity is preserved and the main button goes to the doors", async (
 test("Community stays available but is not a door", async ({ page }) => {
   await openHome(page);
   await expect(page.locator('#home .hero-community a[href="/start#community"]')).toHaveCount(1);
-  await expect(page.locator("#community .community-band a.btn")).toHaveAttribute("href", "/start#community");
+  await expect(page.locator("#community #community-join")).toHaveAttribute("href", "/start#community");
+  await expect(page.locator("#community-join")).toHaveText("Join the Geezword Community — Free →");
   await expect(page.locator('.nav-links a[href="#community"]')).toHaveCount(1);
-  // The six doors stay product doors; registration is the separate link above
-  // them at every width (LA, approved 2026-11-13; reconfirmed 2026-11-17).
+  // Registration is its own section (owner, 2026-11-17): directly after the
+  // banner, before "What would you like to do?", which has no Join button.
+  const order = await page.evaluate(() => [...document.querySelectorAll("main > section, body > section")].map((s) => s.id).filter(Boolean).slice(0, 3));
+  expect(order).toEqual(["home", "community", "explore"]);
+  await expect(page.locator('#explore a[href*="start"]')).toHaveCount(0);
   const doorHrefs = await page.locator("#explore .door-card a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
   expect(doorHrefs.some((h) => /start/.test(h))).toBe(false);
-  await expect(page.locator("#explore #explore-join")).toHaveAttribute("href", "/start#community");
-  await expect(page.locator("#explore-join")).toHaveText("Join the Free Geezword Community →");
+  // The four benefits, the opt-in explanation, and the simple link near the bottom.
+  expect(await page.locator("#community .community-benefits li").allTextContents()).toEqual([
+    "New learning resources and lessons",
+    "Updates about Geezword books, apps, games, and keyboards",
+    "Information about demonstrations and community events",
+    "Important Geezword announcements",
+  ]);
+  await expect(page.locator("#community .community-optin")).toContainText("ongoing Geezword Community emails");
+  await expect(page.locator("#community .community-optin")).toContainText("not a ticket or reservation");
+  await expect(page.locator("#community-join-bottom")).toHaveAttribute("href", "/start#community");
+  const bottom = await page.evaluate(() => {
+    const y = (sel) => document.querySelector(sel).getBoundingClientRect().top + scrollY;
+    return y("#community-join-bottom") > y("#kidase") && y("#community-join-bottom") < y("#history");
+  });
+  expect(bottom).toBe(true);
+  await expect(page.locator("h2", { hasText: "Join the Geezword Community" })).toHaveCount(1);
   // The hero's primary button is exploration, not registration.
   await expect(page.locator("#home .hero-buttons a.btn-primary")).not.toHaveAttribute("href", /start/);
 });

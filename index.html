@@ -65,6 +65,29 @@
     </div>
   </section>
 
+  <!-- Community registration: its own section, first after the banner.
+       Joining = ongoing Geezword Community emails (the form is on /start),
+       not an event reservation. Visitors from an event QR code (e.g. /la)
+       see that event named in the introduction (script at the end). -->
+  <section class="section community-feature" id="community" aria-labelledby="community-heading">
+    <div class="container">
+      <div class="community-feature-inner">
+        <h2 id="community-heading">Join the Geezword Community</h2>
+        <p class="community-intro" id="community-intro">Stay connected with Geezword. Join our free community to receive updates about learning resources, books, apps, games, keyboards, and upcoming community activities.</p>
+        <a href="/start#community" class="btn btn-primary community-cta" id="community-join">Join the Geezword Community &mdash; Free&nbsp;&#8594;</a>
+        <p class="community-note">Free to join &middot; No spam &middot; Unsubscribe anytime</p>
+        <h3 class="community-benefits-title">What members receive</h3>
+        <ul class="community-benefits">
+          <li>New learning resources and lessons</li>
+          <li>Updates about Geezword books, apps, games, and keyboards</li>
+          <li>Information about demonstrations and community events</li>
+          <li>Important Geezword announcements</li>
+        </ul>
+        <p class="community-optin">Joining signs you up for ongoing Geezword Community emails in your chosen language. It is not a ticket or reservation for any event.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Front doors: six things a visitor can do. Each door goes to an existing,
        working destination (a section of this page, a site page or an app). -->
   <section class="section section-alt" id="explore" data-nav-section="home" aria-labelledby="explore-heading">
@@ -73,9 +96,6 @@
         <h2 id="explore-heading">What would you like to do?</h2>
         <p>Choose what you want to explore today.</p>
       </div>
-      <!-- Registration first, above the doors at every width (source order =
-           screen order = keyboard order). -->
-      <p class="explore-join"><a href="/start#community" class="btn btn-primary" id="explore-join">Join the Free Geezword Community&nbsp;&#8594;</a></p>
       <ul class="door-grid">
 
         <li class="door-card" id="door-learn">
@@ -416,16 +436,10 @@
     </div>
   </section>
 
-  <!-- Community -->
-  <section class="section section-alt" id="community">
+  <!-- Secondary Join link (the main community section is near the top). -->
+  <section class="section section-alt community-more" aria-label="Join the Geezword Community">
     <div class="container">
-      <div class="community-band">
-        <h2>Join the Geezword Community</h2>
-        <p>Stay connected for new learning resources, games, books, demonstrations and community events.</p>
-        <p class="community-for">For parents, learners, teachers, churches and community language programs.</p>
-        <a href="/start#community" class="btn btn-primary">Join Free &#8594;</a>
-        <p class="community-note">Free to join &middot; No spam &middot; Unsubscribe anytime</p>
-      </div>
+      <p><a href="/start#community" id="community-join-bottom">Join the Geezword Community, free&nbsp;&#8594;</a></p>
     </div>
   </section>
 
@@ -528,7 +542,14 @@
     // this tab (journey.js), so a later /start registration keeps them.
     // Nothing is sent anywhere from this page.
     import { readCampaign } from "/journey.js";
-    readCampaign();
+    const campaign = readCampaign();
+    // Event QR visitors see their event named in the community introduction.
+    // Add an entry here for a future event campaign; nothing else changes.
+    const EVENT_INTROS = {
+      "la-book-signing-2026": "Stay connected with Geezword beyond the Los Angeles event. Join our free community to receive updates about learning resources, books, apps, games, keyboards, and upcoming community activities.",
+    };
+    const intro = EVENT_INTROS[campaign.utmCampaign];
+    if (intro) document.getElementById("community-intro").textContent = intro;
   </script>
 </body>
 </html>

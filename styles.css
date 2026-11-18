@@ -1352,34 +1352,14 @@ img {
   .door-card .door-link { width: 100%; justify-content: center; text-align: center; }
 }
 
-/* "Join the Free Geezword Community" between the heading and the doors, at
-   every width (spacing on tablets and desktop exactly as before). */
-#explore .container {
-  display: flex;
-  flex-direction: column;
-}
-
-#explore .section-header {
-  margin-bottom: 0;
-}
-
-#explore .explore-join {
-  width: 100%;
-  max-width: 560px;
-  margin: var(--gz-space-6) auto var(--gz-space-12);
-  text-align: center;
-  font-size: var(--gz-text-base);
-  color: var(--text-mid);
-}
-
 /* Homepage search button: phones only (see the 560px block below). */
 .nav-search-toggle {
   display: none;
 }
 
 /* === Phones (≤560px): compact doors for QR visitors ===
-   Two columns × three rows, whole card tappable, full descriptions kept;
-   the Join button sits above the doors. Tablets and desktop are unaffected. */
+   Two columns × three rows, whole card tappable, full descriptions kept.
+   Tablets and desktop are unaffected. */
 @media (max-width: 560px) {
   #explore {
     padding: var(--gz-space-8) var(--gz-space-4);
@@ -1390,6 +1370,10 @@ img {
     line-height: 1.2;
     text-wrap: balance;
     margin-bottom: var(--gz-space-2);
+  }
+
+  #explore .section-header {
+    margin-bottom: var(--gz-space-6);
   }
 
   #explore .section-header p {
@@ -1461,18 +1445,6 @@ img {
   #explore .door-card:has(.door-link:focus-visible) {
     outline: 3px solid var(--gz-saffron-deep);
     outline-offset: 2px;
-  }
-
-  #explore .explore-join {
-    max-width: none;
-    margin: var(--gz-space-4) 0 var(--gz-space-6);
-  }
-
-  #explore .explore-join .btn {
-    width: 100%;
-    min-height: 48px;
-    justify-content: center;
-    background: var(--gz-saffron);
   }
 
   /* Homepage header: the search box folds into a 🔍 button; tapping it
@@ -1632,40 +1604,161 @@ img {
   color: var(--gz-saffron-deep);
 }
 
-/* Community band */
-.community-band {
-  max-width: 640px;
+/* Community registration section (homepage, first after the banner):
+   indigo band so it stands apart from the parchment sections around it. */
+.community-feature {
+  background: var(--gz-indigo);
+  color: var(--gz-parchment);
+}
+
+.community-feature-inner {
+  max-width: 680px;
   margin: 0 auto;
   text-align: center;
 }
 
-.community-band h2 {
+.community-feature h2 {
   font-size: var(--gz-text-2xl);
   font-weight: 700;
-  color: var(--gz-indigo);
-  margin-bottom: var(--gz-space-3);
-}
-
-.community-band p {
-  font-size: var(--gz-text-base);
-  color: var(--text-mid);
+  line-height: 1.2;
+  color: var(--gz-parchment);
   margin-bottom: var(--gz-space-4);
 }
 
-.community-band p.community-for {
-  font-size: var(--gz-text-sm);
+.community-feature p {
+  color: var(--gz-parchment);
+}
+
+.community-feature .community-intro {
+  font-size: var(--gz-text-lg);
+  line-height: 1.55;
   margin-bottom: var(--gz-space-6);
 }
 
-.community-band .btn {
-  font-size: var(--gz-text-base);
-  min-height: 48px;
-  padding: var(--gz-space-3) var(--gz-space-8);
+.community-feature .community-benefits-title {
+  font-size: var(--gz-text-lg);
+  color: var(--gz-saffron-pale);
+  margin: var(--gz-space-8) 0 var(--gz-space-4);
 }
 
-.community-band p.community-note {
-  font-size: var(--gz-text-xs);
-  margin: var(--gz-space-4) 0 0;
+.community-benefits {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gz-space-3) var(--gz-space-6);
+  margin: 0 auto;
+  padding: 0;
+  text-align: left;
+}
+
+.community-benefits li {
+  position: relative;
+  padding-left: var(--gz-space-8);
+  font-size: var(--gz-text-base);
+  line-height: 1.45;
+}
+
+.community-benefits li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  background: var(--gz-saffron);
+  color: var(--gz-indigo-deep);
+  font-weight: 700;
+  font-size: var(--gz-text-sm);
+  line-height: 1.4em;
+  text-align: center;
+}
+
+.community-feature .community-cta {
+  background: var(--gz-saffron);
+  color: var(--gz-ink);
+  font-size: var(--gz-text-lg);
+  min-height: 52px;
+  padding: var(--gz-space-3) var(--gz-space-8);
+  justify-content: center;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.community-feature .community-cta:hover {
+  background: var(--gz-saffron-pale);
+}
+
+.community-feature .community-cta:focus-visible {
+  outline: 3px solid var(--gz-parchment);
+  outline-offset: 3px;
+}
+
+.community-feature .community-note {
+  font-size: var(--gz-text-sm);
+  color: var(--gz-saffron-pale);
+  margin: var(--gz-space-3) 0 0;
+}
+
+.community-feature .community-optin {
+  font-size: var(--gz-text-sm);
+  line-height: 1.5;
+  margin: var(--gz-space-6) auto 0;
+  max-width: 34rem;
+}
+
+/* Secondary Join link near the bottom of the homepage. */
+.community-more {
+  padding-top: var(--gz-space-8);
+  padding-bottom: var(--gz-space-8);
+  text-align: center;
+}
+
+.community-more p {
+  margin: 0;
+  font-size: var(--gz-text-lg);
+  font-weight: 600;
+}
+
+.community-more a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--gz-indigo);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+@media (max-width: 640px) {
+  .community-feature {
+    padding-top: var(--gz-space-8);
+    padding-bottom: var(--gz-space-8);
+  }
+
+  .community-feature h2 {
+    font-size: clamp(var(--gz-text-xl), 7vw, var(--gz-text-2xl));
+    margin-bottom: var(--gz-space-3);
+  }
+
+  .community-benefits {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--gz-space-3);
+  }
+
+  .community-feature .community-intro {
+    font-size: var(--gz-text-base);
+    line-height: 1.5;
+    margin-bottom: var(--gz-space-4);
+  }
+
+  .community-feature .community-cta {
+    font-size: var(--gz-text-base);
+    padding: var(--gz-space-3) var(--gz-space-4);
+  }
+
+  .community-feature .community-benefits-title {
+    margin-top: var(--gz-space-6);
+  }
 }
 
 /* History strip: dates as headings */
@@ -1692,7 +1785,7 @@ img {
 @media (max-width: 768px) {
   .hero-buttons .btn,
   .play-cta-row .btn,
-  .community-band .btn,
+  .community-feature .community-cta,
   .path-card > .btn,
   .teach-card > .btn {
     width: 100%;
